@@ -120,8 +120,8 @@ minimum_password_length = 6
 password_requirements = ""
 
 [auth.external.spotify]
-enabled = true
-client_id = "env(VITE_SPOTIFY_CLIENT_ID)"
+enabled = false
+client_id = "env(SPOTIFY_CLIENT_ID)"
 secret = "env(SPOTIFY_CLIENT_SECRET)"
 redirect_uri = "env(VITE_SPOTIFY_REDIRECT_URI)"
 url = "https://accounts.spotify.com"

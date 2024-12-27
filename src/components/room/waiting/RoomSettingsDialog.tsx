@@ -4,8 +4,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { PlaylistSearch } from './PlaylistSearch';
+import { useState } from 'react';
+import { useRoom } from '@/hooks/useRoom';
+import { toast } from 'sonner';
+import { supabase } from '@/lib/supabase';
 
 interface RoomSettingsDialogProps {
   open: boolean;
@@ -16,6 +20,27 @@ export function RoomSettingsDialog({
   open,
   onOpenChange,
 }: RoomSettingsDialogProps) {
+  const { room } = useRoom();
+  const [playlistId, setPlaylistId] = useState(room?.playlist_id ?? '');
+  const [loading, setLoading] = useState(false);
+
+  const handleSave = async () => {
+    if (!room) return;
+
+    setLoading(true);
+
+    await supabase
+      .from('rooms')
+      .update({
+        playlist_id: playlistId,
+      })
+      .eq('room_id', room.room_id);
+
+    toast.success('Room settings saved');
+    setLoading(false);
+    onOpenChange(false);
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
@@ -24,16 +49,12 @@ export function RoomSettingsDialog({
         </DialogHeader>
         <div className="flex flex-col gap-4">
           <div className="flex flex-col gap-2">
-            <label htmlFor="playlist" className="text-sm font-medium">
-              Spotify Playlist URL
-            </label>
-            <Input
-              id="playlist"
-              placeholder="https://open.spotify.com/playlist/..."
-              // Add playlist URL handling logic
-            />
+            <label className="text-sm font-medium">Spotify Playlist</label>
+            <PlaylistSearch value={playlistId} onChange={setPlaylistId} />
           </div>
-          <Button onClick={() => onOpenChange(false)}>Save Settings</Button>
+          <Button onClick={handleSave} loading={loading}>
+            Save Settings
+          </Button>
         </div>
       </DialogContent>
     </Dialog>
