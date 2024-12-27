@@ -61,6 +61,8 @@ export function RoomProvider({ roomId, children }: RoomProviderProps) {
       queryFn: async () => {
         if (!session) return null;
 
+        console.log('session', session);
+
         const { data, error } = await supabase
           .from('players')
           .select('*')
@@ -72,7 +74,7 @@ export function RoomProvider({ roomId, children }: RoomProviderProps) {
 
         return data;
       },
-      enabled: !!session && !!roomId,
+      enabled: !!roomId,
     });
 
   // Query for all players in the room

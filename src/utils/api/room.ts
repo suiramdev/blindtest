@@ -17,14 +17,14 @@ export async function createRoom(): Promise<Room> {
   return RoomSchema.parse(data);
 }
 
-export async function getRoom(roomId: string): Promise<Room> {
+export async function getRoom(roomId: string): Promise<Room | null> {
   const { data, error } = await supabase
     .from('rooms')
     .select('*')
     .eq('room_id', roomId)
     .single();
 
-  if (error) throw new Error('Room not found');
+  if (error) return null;
 
   return RoomSchema.parse(data);
 }
@@ -37,7 +37,10 @@ export async function joinRoom(roomId: string, username: string) {
 
 export async function leaveRoom(roomId: string): Promise<void> {
   const session = await getCurrentSession();
+
   const room = await getRoom(roomId);
+  if (!room) throw new Error('Room not found');
+
   const isHost = room.host_id === session.user.id;
 
   // Remove player

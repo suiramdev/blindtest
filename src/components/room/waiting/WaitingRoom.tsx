@@ -18,6 +18,8 @@ export function WaitingRoom() {
   const navigate = useNavigate();
 
   useEffect(() => {
+    console.log('currentPlayer', currentPlayer);
+    console.log('isLoading', isLoading);
     if (!isLoading && !currentPlayer) {
       setJoinDialogOpen(true);
     }
