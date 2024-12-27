@@ -22,6 +22,7 @@ import {
 import { cn } from '@/lib/utils';
 import { SpotifySearchResponse, SpotifyPlaylist } from '@/utils/api/types';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { useDebounce } from '@/hooks/useDebounce';
 
 interface PlaylistSearchProps {
   value?: string;
@@ -31,12 +32,14 @@ interface PlaylistSearchProps {
 export function PlaylistSearch({ value, onChange }: PlaylistSearchProps) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState('');
+  const debouncedSearch = useDebounce(search, 500);
 
   // Query for search results
   const searchQuery = useQuery<SpotifySearchResponse>({
-    queryKey: ['spotify-search', search],
-    queryFn: () => searchSpotifyPlaylists(search),
-    enabled: search.length > 0,
+    queryKey: ['spotify-search', debouncedSearch],
+    queryFn: () => searchSpotifyPlaylists(debouncedSearch),
+    enabled: debouncedSearch.length > 0,
+    staleTime: 1000 * 60 * 5,
   });
 
   // Query for selected playlist details
@@ -44,14 +47,11 @@ export function PlaylistSearch({ value, onChange }: PlaylistSearchProps) {
     queryKey: ['spotify-playlist', value],
     queryFn: () => getSpotifyPlaylist(value!),
     enabled: !!value,
+    staleTime: 1000 * 60 * 5,
   });
 
-  const playlists = (searchQuery.data?.playlists?.items || []).filter(
-    (playlist): playlist is NonNullable<typeof playlist> =>
-      playlist !== null &&
-      typeof playlist.id === 'string' &&
-      typeof playlist.name === 'string' &&
-      typeof playlist.images?.[0]?.url === 'string',
+  const playlists = (searchQuery.data?.playlists?.items ?? []).filter(
+    (playlist) => playlist !== null,
   );
 
   const selectedPlaylist = value
@@ -88,26 +88,30 @@ export function PlaylistSearch({ value, onChange }: PlaylistSearchProps) {
           <Music2 className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[460px] p-0">
-        <Command>
+      <PopoverContent className="w-[460px] p-0" align="start">
+        <Command shouldFilter={false}>
           <CommandInput
             placeholder="Search Spotify playlists..."
             value={search}
             onValueChange={setSearch}
           />
           <CommandList>
-            <CommandEmpty>
-              {searchQuery.isLoading ? (
-                <div className="flex items-center justify-center py-6">
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                </div>
-              ) : searchQuery.error ? (
-                'Error loading playlists.'
-              ) : (
-                'No playlists found.'
-              )}
-            </CommandEmpty>
-            {playlists.length > 0 && (
+            {searchQuery.isLoading ? (
+              <div className="p-4 text-center">
+                <Loader2 className="h-4 w-4 animate-spin mx-auto" />
+                <p className="text-sm text-muted-foreground">
+                  Searching playlists...
+                </p>
+              </div>
+            ) : searchQuery.isError ? (
+              <div className="p-4 text-center text-sm text-destructive">
+                Error loading playlists. Please try again.
+              </div>
+            ) : (
+              <CommandEmpty>No playlists found.</CommandEmpty>
+            )}
+
+            {!searchQuery.isLoading && !searchQuery.isError && (
               <CommandGroup>
                 {playlists.map((playlist) => (
                   <CommandItem
