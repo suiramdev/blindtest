@@ -28,12 +28,7 @@ export function RoomProvider({ roomId, children }: RoomProviderProps) {
 
   // Query for room data
   const { data: room, isLoading: isRoomLoading } = useQuery<Room | null>({
-    queryKey: [
-      'room',
-      {
-        roomId,
-      },
-    ],
+    queryKey: ['room', { roomId }],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('rooms')
@@ -42,7 +37,6 @@ export function RoomProvider({ roomId, children }: RoomProviderProps) {
         .single();
 
       if (error) throw error;
-
       return data;
     },
     enabled: !!roomId,
@@ -51,18 +45,9 @@ export function RoomProvider({ roomId, children }: RoomProviderProps) {
   // Query for current player data
   const { data: currentPlayer, isLoading: isPlayerLoading } =
     useQuery<Player | null>({
-      queryKey: [
-        'players',
-        {
-          roomId,
-          userId: session?.user.id,
-        },
-      ],
+      queryKey: ['players', { roomId, userId: session?.user.id }],
       queryFn: async () => {
         if (!session) return null;
-
-        console.log('session', session);
-
         const { data, error } = await supabase
           .from('players')
           .select('*')
@@ -71,20 +56,14 @@ export function RoomProvider({ roomId, children }: RoomProviderProps) {
           .maybeSingle();
 
         if (error) throw error;
-
         return data;
       },
-      enabled: !!roomId,
+      enabled: !!roomId && !!session?.user.id,
     });
 
   // Query for all players in the room
   const { data: players, isLoading: isPlayersLoading } = useQuery<Player[]>({
-    queryKey: [
-      'players',
-      {
-        roomId,
-      },
-    ],
+    queryKey: ['players', { roomId }],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('players')
@@ -92,7 +71,6 @@ export function RoomProvider({ roomId, children }: RoomProviderProps) {
         .eq('room_id', roomId);
 
       if (error) throw error;
-
       return data;
     },
     enabled: !!roomId,
