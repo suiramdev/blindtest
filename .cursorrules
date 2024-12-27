@@ -1,0 +1,48 @@
+We are building a Blind Test game as a web application. Users can create a game session, then share the link with friends, who join by entering their username. The game’s flow should be inspired by kahoot.com:
+
+1. **Game Creation & Sharing**
+   - A “host” creates a new game session and selects a Spotify playlist to serve as the source of questions.
+   - Once the session is created, a link is generated for players to join.
+   - Players click the link, enter their username, and are registered for the session.
+
+2. **Gameplay Mechanics**
+   - The host starts the game, and a snippet of a song (from the chosen Spotify playlist) is played.
+   - Each player has **X seconds** to guess the song. The longer they wait to answer, the fewer points they receive.
+   - After each track, players can see their scores. The process repeats until the playlist segment or question set is complete.
+
+3. **Technologies & Requirements**
+   - **React (with Vite)**: Use a clean, modular structure.  
+   - **TypeScript**: Strict typing for reliable, maintainable code.  
+   - **Supabase**: Database & authentication in the back end.  
+   - **Spotify API**: Fetch and play song snippets for the blind test.  
+   - **Tailwind CSS**: Rapid UI styling.  
+   - **shadcn/ui**: UI components library for consistent styling and design.  
+   - **pnpm**: Package manager.  
+   - **zod**: Schema validation for form inputs and API responses.  
+   - **Tanstack**: Use Tanstack Query for data fetching and caching, Tanstack Router for navigation, Tanstack Form for form handling, ...
+   - Follow best practices for folder structure, code style, and accessibility.
+
+4. **Code & Quality Expectations**
+   - Organize code into reusable React components.
+   - Use Tailwind utility classes in combination with shadcn/ui components.
+   - Validate all incoming/outgoing data with zod.
+   - Ensure the project is built and run via `pnpm` scripts (e.g., `pnpm install`, `pnpm dev`, etc.).
+   - Make sure the app is fully responsive and user-friendly.
+
+5. **Deliverables**
+   - A functioning web application where multiple players can join a game and compete in a timed “name that tune” style blind test.
+   - Clean, typed, and tested code across the entire stack.
+
+Use this prompt as a guide to generate code, components, and tests that align with the game’s requirements and the specified tech stack.
+
+
+
+
+
+
+
+
+
+
+
+ChatGPT can make mistakes. Check important info.
