@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { WaitingRoom } from '@/components/room/waiting/WaitingRoom';
 import { RoomProvider } from '@/contexts/RoomContext';
+import { Room } from '@/components/room/Room';
 
 export const Route = createFileRoute('/room/$id')({
   component: RoomPage,
@@ -11,9 +11,7 @@ function RoomPage() {
 
   return (
     <RoomProvider roomId={roomId}>
-      <div className="flex flex-1 items-center justify-center">
-        <WaitingRoom />
-      </div>
+      <Room />
     </RoomProvider>
   );
 }

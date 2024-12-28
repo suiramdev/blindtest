@@ -9,6 +9,7 @@ import { useRoom } from '@/hooks/useRoom';
 import { JoinRoomDialog } from '../JoinRoomDialog';
 import { useNavigate } from '@tanstack/react-router';
 import { leaveRoom } from '@/utils/api/room';
+import { supabase } from '@/lib/supabase';
 
 export function WaitingRoom() {
   const { room, currentPlayer, isLoading, isHost } = useRoom();
@@ -39,7 +40,14 @@ export function WaitingRoom() {
 
     try {
       setLoading(true);
-      // Add start game logic
+
+      // Start first round (which will also update room status)
+      await supabase.functions.invoke('start-round', {
+        body: {
+          roomId: room.room_id,
+          playlistId: room.playlist_id,
+        },
+      });
     } catch (error) {
       toast.error('Failed to start game');
       console.error('Failed to start game:', error);
@@ -59,49 +67,58 @@ export function WaitingRoom() {
   };
 
   return (
-    <div className="flex w-full max-w-2xl flex-col gap-8 rounded-lg border p-6">
-      <div className="flex items-center justify-between gap-2">
-        <h2 className="text-2xl font-bold">Waiting Room</h2>
-        {isHost && (
-          <>
+    <div className="flex flex-1 items-center justify-center">
+      <div className="flex w-full max-w-2xl flex-col gap-8 rounded-lg border p-6">
+        <div className="flex items-center justify-between gap-2">
+          <h2 className="text-2xl font-bold">Waiting Room</h2>
+          {isHost && (
+            <>
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => setSettingsOpen(true)}
+              >
+                <Settings className="h-4 w-4" />
+              </Button>
+              <RoomSettingsDialog
+                open={settingsOpen}
+                onOpenChange={setSettingsOpen}
+              />
+            </>
+          )}
+        </div>
+        <div className="flex flex-col gap-4">
+          <PlayersList />
+          <InviteOptions roomId={room.room_id} />
+          <div className="flex gap-2">
+            {isHost ? (
+              <Button
+                onClick={handleStartGame}
+                disabled={loading || !room.playlist_id}
+                className="flex-1"
+              >
+                Start Game
+              </Button>
+            ) : (
+              <Button disabled className="flex-1">
+                Waiting for host to start...
+              </Button>
+            )}
             <Button
               variant="outline"
-              size="icon"
-              onClick={() => setSettingsOpen(true)}
+              onClick={handleLeaveRoom}
+              className="gap-2"
             >
-              <Settings className="h-4 w-4" />
+              <LogOut className="h-4 w-4" />
+              Leave Room
             </Button>
-            <RoomSettingsDialog
-              open={settingsOpen}
-              onOpenChange={setSettingsOpen}
-            />
-          </>
-        )}
-      </div>
-      <div className="flex flex-col gap-4">
-        <PlayersList />
-        <InviteOptions roomId={room.room_id} />
-        <div className="flex gap-2">
-          {isHost ? (
-            <Button
-              onClick={handleStartGame}
-              disabled={loading || !room.playlist_id}
-              className="flex-1"
-            >
-              Start Game
-            </Button>
-          ) : (
-            <Button disabled className="flex-1">
-              Waiting for host to start...
-            </Button>
-          )}
-          <Button variant="outline" onClick={handleLeaveRoom} className="gap-2">
-            <LogOut className="h-4 w-4" />
-            Leave Room
-          </Button>
+          </div>
         </div>
+        <JoinRoomDialog
+          open={joinDialogOpen}
+          onOpenChange={setJoinDialogOpen}
+        />
       </div>
-      <JoinRoomDialog open={joinDialogOpen} onOpenChange={setJoinDialogOpen} />
     </div>
   );
 }

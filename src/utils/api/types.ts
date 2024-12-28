@@ -13,6 +13,7 @@ export const RoomSchema = z.object({
   room_id: z.string(),
   host_id: z.string().uuid(),
   playlist_id: z.string().nullable(),
+  current_round_id: z.string().uuid().nullable(),
   created_at: z.string(),
   status: z.enum(['waiting', 'playing', 'finished']).default('waiting'),
 });
@@ -43,7 +44,25 @@ export const SpotifySearchResponseSchema = z.object({
   }),
 });
 
+export const RoundSchema = z.object({
+  round_id: z.string().uuid(),
+  room_id: z.string(),
+  track_id: z.string(),
+  preview_url: z.string(),
+  answers: z
+    .record(
+      z.object({
+        answer: z.string(),
+        score: z.number(),
+        answeredAt: z.string(),
+      }),
+    )
+    .default({}),
+  created_at: z.string(),
+});
+
 export type Player = z.infer<typeof PlayerSchema>;
 export type Room = z.infer<typeof RoomSchema>;
 export type SpotifyPlaylist = z.infer<typeof SpotifyPlaylistSchema>;
 export type SpotifySearchResponse = z.infer<typeof SpotifySearchResponseSchema>;
+export type Round = z.infer<typeof RoundSchema>;

@@ -3,6 +3,7 @@ create table if not exists rooms (
   room_id text primary key,
   host_id uuid not null references auth.users(id),
   playlist_id text,
+  status text not null default 'waiting',
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
@@ -22,7 +23,8 @@ create table if not exists players (
 create table if not exists rounds (
   round_id uuid primary key default gen_random_uuid(),
   room_id text not null references rooms(room_id) on delete cascade,
-  song_id text not null,
+  track_id text not null,
+  preview_url text not null,
   start_time timestamp with time zone default timezone('utc'::text, now()) not null,
   answers jsonb not null default '{}',
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
