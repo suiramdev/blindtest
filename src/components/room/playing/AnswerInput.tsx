@@ -4,12 +4,13 @@ import { Button } from '@/components/ui/button';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { useRoom } from '@/hooks/useRoom';
+import { Round } from '@/utils/api/types';
 
 interface AnswerInputProps {
-  roundId: string;
+  round: Round;
 }
 
-export function AnswerInput({ roundId }: AnswerInputProps) {
+export function AnswerInput({ round }: AnswerInputProps) {
   const [answer, setAnswer] = useState('');
   const [loading, setLoading] = useState(false);
   const { room, currentPlayer } = useRoom();
@@ -22,10 +23,9 @@ export function AnswerInput({ roundId }: AnswerInputProps) {
     try {
       const { data } = await supabase.functions.invoke('submit-answer', {
         body: {
-          roundId,
-          answer,
+          roundId: round.round_id,
           playerId: currentPlayer.player_id,
-          roomCode: room.room_id,
+          answer,
         },
       });
 

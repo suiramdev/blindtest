@@ -80,7 +80,7 @@ export function GameRoom() {
 
           {currentRound && (
             <>
-              <AnswerInput roundId={currentRound.round_id} />
+              <AnswerInput round={currentRound} />
               <RoundResults round={currentRound} />
             </>
           )}
