@@ -23,8 +23,7 @@ create table if not exists players (
 create table if not exists rounds (
   round_id uuid primary key default gen_random_uuid(),
   room_id text not null references rooms(room_id) on delete cascade,
-  track_id text not null,
-  preview_url text not null,
+  track jsonb not null,
   start_time timestamp with time zone default timezone('utc'::text, now()) not null,
   answers jsonb not null default '{}',
   created_at timestamp with time zone default timezone('utc'::text, now()) not null

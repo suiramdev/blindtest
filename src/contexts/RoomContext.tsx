@@ -58,7 +58,7 @@ export function RoomProvider({ roomId, children }: RoomProviderProps) {
         if (error) throw error;
         return data;
       },
-      enabled: !!roomId && !!session?.user.id,
+      enabled: !!roomId,
     });
 
   // Query for all players in the room

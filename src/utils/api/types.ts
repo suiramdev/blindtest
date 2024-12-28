@@ -48,7 +48,11 @@ export const RoundSchema = z.object({
   round_id: z.string().uuid(),
   room_id: z.string(),
   track_id: z.string(),
-  preview_url: z.string(),
+  track: z.object({
+    name: z.string(),
+    artists: z.array(z.object({ name: z.string() })),
+    preview_url: z.string(),
+  }),
   answers: z
     .record(
       z.object({

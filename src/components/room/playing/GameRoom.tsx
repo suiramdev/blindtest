@@ -1,9 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useRoom } from '@/hooks/useRoom';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
-import { Button } from '@/components/ui/button';
 import { PlayersList } from '../waiting/PlayersList';
 import { Round } from '@/utils/api/types';
 import { RoundTimer } from './RoundTimer';
@@ -11,9 +10,8 @@ import { AnswerInput } from './AnswerInput';
 import { RoundResults } from './RoundResults';
 
 export function GameRoom() {
-  const { room, isHost } = useRoom();
+  const { room } = useRoom();
   const [isPlaying, setIsPlaying] = useState(false);
-  const queryClient = useQueryClient();
   const [audio, setAudio] = useState<HTMLAudioElement | null>(null);
 
   // Query current round using room.current_round_id
@@ -36,10 +34,10 @@ export function GameRoom() {
 
   // Effect to handle audio playback
   useEffect(() => {
-    if (currentRound?.preview_url && !isPlaying) {
+    if (currentRound?.track.preview_url && !isPlaying) {
       const loadAndPlayAudio = async () => {
         try {
-          const audioElement = new Audio(currentRound.preview_url);
+          const audioElement = new Audio(currentRound.track.preview_url);
           setAudio(audioElement);
           await audioElement.play();
           setIsPlaying(true);
@@ -67,24 +65,7 @@ export function GameRoom() {
         setAudio(null);
       }
     };
-  }, [currentRound?.preview_url]);
-
-  const startNewRound = async () => {
-    try {
-      if (!room?.playlist_id) return;
-
-      await supabase.functions.invoke('start-round', {
-        body: { roomId: room.room_id, playlistId: room.playlist_id },
-      });
-
-      // Invalidate both room and round queries to get the new current_round_id
-      queryClient.invalidateQueries({ queryKey: ['room'] });
-      queryClient.invalidateQueries({ queryKey: ['round'] });
-    } catch (error) {
-      toast.error('Failed to start round');
-      console.error('Failed to start round:', error);
-    }
-  };
+  }, [currentRound?.track.preview_url]);
 
   return (
     <div className="flex flex-1 items-center justify-center">
@@ -97,13 +78,11 @@ export function GameRoom() {
         <div className="flex flex-col gap-4">
           <PlayersList />
 
-          {currentRound ? (
+          {currentRound && (
             <>
               <AnswerInput roundId={currentRound.round_id} />
               <RoundResults round={currentRound} />
             </>
-          ) : (
-            isHost && <Button onClick={startNewRound}>Start New Round</Button>
           )}
         </div>
       </div>

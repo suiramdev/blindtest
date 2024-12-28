@@ -137,8 +137,10 @@ serve(async (req, maxRetries = MAX_RETRIES) => {
       'start_game_round',
       {
         p_room_id: roomId,
-        p_track_id: randomTrack.id,
-        p_preview_url: previewUrl,
+        p_track: {
+          ...randomTrack,
+          preview_url: previewUrl,
+        },
       },
     );
 

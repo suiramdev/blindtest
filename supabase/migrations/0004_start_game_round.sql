@@ -5,8 +5,7 @@ add column current_round_id uuid references rounds(round_id);
 -- Update start_game_round function to set current_round_id
 create or replace function start_game_round(
   p_room_id text,
-  p_track_id text,
-  p_preview_url text
+  p_track jsonb
 ) returns json
 language plpgsql
 security definer
@@ -24,12 +23,10 @@ begin
     -- Create new round
     insert into rounds (
       room_id,
-      track_id,
-      preview_url
+      track
     ) values (
       p_room_id,
-      p_track_id,
-      p_preview_url
+      p_track
     )
     returning * into v_round;
 
