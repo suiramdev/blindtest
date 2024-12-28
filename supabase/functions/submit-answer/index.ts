@@ -13,6 +13,57 @@ interface Answer {
   answer: string;
 }
 
+// Function to normalize text for comparison
+function normalizeText(text: string): string {
+  return (
+    text
+      .toLowerCase()
+      // Normalize unicode characters
+      .normalize('NFKD')
+      // Remove accents/diacritics
+      .replace(/[\u0300-\u036f]/g, '')
+      // Remove special characters and extra spaces
+      .replace(/[^a-z0-9\s]/g, '')
+      // Remove any remaining parentheses content as it's usually extra info
+      .replace(/\(.*?\)/g, '')
+      .replace(/\[.*?\]/g, '')
+      .trim()
+      // Replace multiple spaces with single space
+      .replace(/\s+/g, ' ')
+  );
+}
+
+// Function to calculate string similarity (Levenshtein distance)
+function calculateSimilarity(str1: string, str2: string): number {
+  const matrix: number[][] = [];
+
+  for (let i = 0; i <= str1.length; i++) {
+    matrix[i] = [i];
+  }
+
+  for (let j = 0; j <= str2.length; j++) {
+    matrix[0][j] = j;
+  }
+
+  for (let i = 1; i <= str1.length; i++) {
+    for (let j = 1; j <= str2.length; j++) {
+      if (str1[i - 1] === str2[j - 1]) {
+        matrix[i][j] = matrix[i - 1][j - 1];
+      } else {
+        matrix[i][j] = Math.min(
+          matrix[i - 1][j - 1] + 1,
+          matrix[i][j - 1] + 1,
+          matrix[i - 1][j] + 1,
+        );
+      }
+    }
+  }
+
+  const maxLength = Math.max(str1.length, str2.length);
+  const distance = matrix[str1.length][str2.length];
+  return 1 - distance / maxLength;
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
@@ -62,13 +113,30 @@ serve(async (req) => {
       score = Math.round(MAX_SCORE * (1 - timeDiff / MAX_TIME));
     }
 
-    // Check if the answer matches track name or artist name (case insensitive)
-    const normalizedAnswer = answer.toLowerCase();
-    const isTrackMatch = round.track.name.toLowerCase() === normalizedAnswer;
-    const isArtistMatch = round.track.artists.some(
-      (artist: { name: string }) =>
-        artist.name.toLowerCase() === normalizedAnswer,
+    // Check if the answer matches track name or artist name with fuzzy matching
+    const normalizedAnswer = normalizeText(answer);
+    const normalizedTrackName = normalizeText(round.track.name);
+    const normalizedArtistNames = round.track.artists.map((artist) =>
+      normalizeText(artist.name),
     );
+
+    // Set thresholds for matching
+    const SIMILARITY_THRESHOLD = 0.85; // 85% similarity required for a match
+
+    // Check track name similarity
+    const trackSimilarity = calculateSimilarity(
+      normalizedAnswer,
+      normalizedTrackName,
+    );
+    const isTrackMatch = trackSimilarity >= SIMILARITY_THRESHOLD;
+
+    // Check artist name similarity
+    const isArtistMatch = normalizedArtistNames.some(
+      (artistName) =>
+        calculateSimilarity(normalizedAnswer, artistName) >=
+        SIMILARITY_THRESHOLD,
+    );
+
     const isCorrect = isTrackMatch || isArtistMatch;
 
     if (!isCorrect) {
