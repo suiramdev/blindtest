@@ -103,3 +103,15 @@ export async function kickPlayer(
 
   if (error) throw new Error('Failed to kick player');
 }
+
+export async function startRound(
+  roomId: string,
+  playlistId: string,
+): Promise<void> {
+  await supabase.functions.invoke('start-round', {
+    body: {
+      roomId,
+      playlistId,
+    },
+  });
+}

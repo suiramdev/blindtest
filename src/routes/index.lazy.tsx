@@ -1,7 +1,5 @@
 import { createLazyFileRoute } from '@tanstack/react-router';
-import { Music2 } from 'lucide-react';
 import { CreateRoomForm } from '@/components/forms/CreateRoomForm';
-import { JoinRoomForm } from '@/components/forms/JoinRoomForm';
 
 export const Route = createLazyFileRoute('/')({
   component: Index,
@@ -9,33 +7,16 @@ export const Route = createLazyFileRoute('/')({
 
 function Index() {
   return (
-    <div className="flex flex-1 flex-col items-center justify-center py-16">
-      <div className="w-full max-w-md space-y-8">
-        <div className="text-center">
-          <Music2 className="mx-auto h-12 w-12 text-primary" />
-          <h1 className="mt-4 text-4xl font-bold tracking-tight">Blind Test</h1>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Challenge your friends to a music quiz!
-          </p>
-        </div>
-
-        <div className="space-y-4 rounded-lg border border-border/50 bg-card p-6">
-          <CreateRoomForm />
-
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-300" />
-            </div>
-            <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-background px-2 text-muted-foreground">
-                or
-              </span>
-            </div>
-          </div>
-
-          <JoinRoomForm />
-        </div>
+    <div className="flex-1 flex flex-col items-center justify-center space-y-16 p-6">
+      <img src="/logo.gif" alt="Blind Test Game" className="w-32 h-32" />
+      <div className="flex flex-col items-center text-center space-y-4">
+        <h1 className="text-4xl md:text-5xl font-bold">Blind Test</h1>
+        <p className="text-lg text-muted-foreground max-w-md">
+          Create a room, invite your friends, and test your music knowledge in
+          this fun multiplayer game!
+        </p>
       </div>
+      <CreateRoomForm className="w-full max-w-sm" />
     </div>
   );
 }

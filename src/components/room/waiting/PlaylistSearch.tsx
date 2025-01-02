@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Check, Loader2, Music2 } from 'lucide-react';
+import { Check, ChevronDown, Loader2, Music2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Command,
@@ -82,13 +82,13 @@ export function PlaylistSearch({ value, onChange }: PlaylistSearchProps) {
             {selectedPlaylistQuery.isLoading ? (
               <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
-              selectedPlaylist?.name || 'Select playlist...'
+              selectedPlaylist?.name || 'Select a playlist...'
             )}
           </div>
-          <Music2 className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+          <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[460px] p-0" align="start">
+      <PopoverContent className="w-full p-0" align="start">
         <Command shouldFilter={false}>
           <CommandInput
             placeholder="Search Spotify playlists..."

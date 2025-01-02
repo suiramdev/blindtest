@@ -13,10 +13,11 @@ import {
   FormControl,
   FormField,
   FormItem,
-  FormLabel,
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import { cn } from '@/lib/utils';
+import { PlusIcon } from 'lucide-react';
 
 export const createRoomSchema = z.object({
   username: z.string().min(2, 'Username must be at least 2 characters'),
@@ -24,7 +25,11 @@ export const createRoomSchema = z.object({
 
 export type CreateRoomFormValues = z.infer<typeof createRoomSchema>;
 
-export function CreateRoomForm() {
+interface CreateRoomFormProps {
+  className?: string;
+}
+
+export function CreateRoomForm({ className }: CreateRoomFormProps) {
   const [loading, setLoading] = useState(false);
   const { session } = useSession();
   const navigate = useNavigate();
@@ -58,23 +63,30 @@ export function CreateRoomForm() {
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+      <form
+        onSubmit={form.handleSubmit(onSubmit)}
+        className={cn('space-y-4 w-full', className)}
+      >
         <FormField
           control={form.control}
           name="username"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Username</FormLabel>
               <FormControl>
-                <Input placeholder="Enter your username" {...field} />
+                <Input
+                  placeholder="Username"
+                  className="text-center"
+                  size="lg"
+                  {...field}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
-
-        <Button type="submit" className="w-full" loading={loading}>
-          Create Room
+        <Button type="submit" className="w-full" size="lg" loading={loading}>
+          <PlusIcon className="w-4 h-4" />
+          Create a Room
         </Button>
       </form>
     </Form>

@@ -30,7 +30,6 @@ type AnswerFormValues = z.infer<typeof answerSchema>;
 export function AnswerInput({ round }: AnswerInputProps) {
   const { room, currentPlayer } = useRoom();
   const [shakeKey, setShakeKey] = useState(0);
-  const [score, setScore] = useState<number | null>(null);
 
   const form = useForm<AnswerFormValues>({
     resolver: zodResolver(answerSchema),
@@ -41,7 +40,7 @@ export function AnswerInput({ round }: AnswerInputProps) {
 
   const {
     handleSubmit,
-    formState: { isSubmitting, isSubmitSuccessful },
+    formState: { isSubmitting },
     setError,
     reset,
   } = form;
@@ -50,7 +49,7 @@ export function AnswerInput({ round }: AnswerInputProps) {
     if (!currentPlayer || !room) return;
 
     try {
-      const { data } = await supabase.functions.invoke('submit-answer', {
+      await supabase.functions.invoke('submit-answer', {
         body: {
           roundId: round.round_id,
           playerId: currentPlayer.player_id,
@@ -58,26 +57,27 @@ export function AnswerInput({ round }: AnswerInputProps) {
         },
       });
 
-      if (data.isCorrect) {
-        setScore(data.score);
-        setTimeout(() => {
-          reset();
-        }, 2000);
-      } else {
-        setShakeKey((prev) => prev + 1);
-        setError('answer', {
-          type: 'manual',
-          message: 'Wrong answer, try again!',
-        });
-        setTimeout(() => {
-          form.clearErrors();
-        }, 2000);
-      }
+      setShakeKey((prev) => prev + 1);
+      form.setError('answer', {
+        type: 'manual',
+        message: 'Wrong answer, try again!',
+      });
+
+      reset(
+        {
+          answer: '',
+        },
+        {
+          keepDirty: true,
+          keepErrors: true,
+        },
+      );
     } catch (error) {
       setError('answer', {
         type: 'manual',
         message: 'Failed to submit answer',
       });
+      console.error('Failed to submit answer:', error);
     }
   };
 
@@ -89,40 +89,33 @@ export function AnswerInput({ round }: AnswerInputProps) {
           name="answer"
           render={({ field }) => (
             <FormItem>
-              <div className="relative" key={shakeKey}>
+              <div className="space-y-2" key={shakeKey}>
                 <FormControl>
                   <Input
                     {...field}
-                    placeholder="Enter song name..."
-                    disabled={isSubmitting || isSubmitSuccessful}
+                    placeholder="Enter song name, artist or album..."
+                    disabled={isSubmitting}
                     className={cn(
-                      'pr-24',
+                      'h-10',
                       form.formState.errors.answer &&
                         'border-destructive animate-shake',
-                      isSubmitSuccessful && 'border-green-500',
                     )}
                   />
                 </FormControl>
+                <FormMessage />
                 <Button
                   type="submit"
-                  disabled={isSubmitting || isSubmitSuccessful}
-                  className="absolute right-1 top-1 h-7"
-                  size="sm"
+                  loading={isSubmitting}
+                  className="w-full"
+                  size="lg"
                 >
-                  Submit
+                  <Check className="h-4 w-4" />
+                  Validate
                 </Button>
               </div>
-              <FormMessage />
             </FormItem>
           )}
         />
-
-        {isSubmitSuccessful && score !== null && (
-          <div className="flex items-center gap-2 text-sm text-green-500">
-            <Check className="h-4 w-4" />
-            <span>Correct answer! +{score} points</span>
-          </div>
-        )}
       </form>
     </Form>
   );
