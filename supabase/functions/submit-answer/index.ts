@@ -1,17 +1,14 @@
-import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+interface Artist {
+  name: string;
+}
 
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers':
-    'authorization, x-client-info, apikey, content-type',
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type",
 };
-
-interface Answer {
-  roundId: string;
-  playerId: string;
-  answer: string;
-}
 
 // Function to normalize text for comparison
 function normalizeText(text: string): string {
@@ -19,17 +16,17 @@ function normalizeText(text: string): string {
     text
       .toLowerCase()
       // Normalize unicode characters
-      .normalize('NFKD')
+      .normalize("NFKD")
       // Remove accents/diacritics
-      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[\u0300-\u036f]/g, "")
       // Remove special characters and extra spaces
-      .replace(/[^a-z0-9\s]/g, '')
+      .replace(/[^a-z0-9\s]/g, "")
       // Remove any remaining parentheses content as it's usually extra info
-      .replace(/\(.*?\)/g, '')
-      .replace(/\[.*?\]/g, '')
+      .replace(/\(.*?\)/g, "")
+      .replace(/\[.*?\]/g, "")
       .trim()
       // Replace multiple spaces with single space
-      .replace(/\s+/g, ' ')
+      .replace(/\s+/g, " ")
   );
 }
 
@@ -64,50 +61,64 @@ function calculateSimilarity(str1: string, str2: string): number {
   return 1 - distance / maxLength;
 }
 
-serve(async (req) => {
-  if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders });
+// Maximum score a player can get for a correct answer
+const MAX_SCORE = 1000;
+// Maximum time in seconds allowed to answer before scoring 0 points
+const MAX_TIME = 30;
+// Minimum similarity score (0-1) required between user's answer and correct song title
+// Lower values are more lenient, higher values require more exact matches
+// 0.85 means answers must be 85% similar to be considered correct
+const SIMILARITY_THRESHOLD = 0.85;
+
+const supabase = createClient(
+  Deno.env.get("URL") ?? "",
+  Deno.env.get("ANON_KEY") ?? "",
+  {
+    auth: {
+      persistSession: false,
+    },
+    global: {
+      headers: {
+        Authorization: `Bearer ${Deno.env.get("SERVICE_ROLE_KEY")}`,
+      },
+    },
+  },
+);
+
+Deno.serve(async (req) => {
+  if (req.method === "OPTIONS") {
+    return new Response("ok", { headers: corsHeaders });
   }
 
+  const { roundId, answer, playerId } = await req.json();
+
   try {
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-    );
-
-    // Get the answer data from the request
-    const { roundId, answer, playerId }: Answer = await req.json();
-
-    // Verify the player exists and belongs to the room
-    const { data: player, error: playerError } = await supabase
-      .from('players')
-      .select('player_id')
-      .eq('player_id', playerId)
+    const { data: roundData, error: roundError } = await supabase
+      .from("rounds")
+      .select("*")
+      .eq("round_id", roundId)
       .single();
 
-    if (playerError || !player) {
-      throw new Error('Invalid player');
-    }
+    if (roundError) throw roundError;
+    if (!roundData) throw new Error("Round not found");
 
-    // Get the round details
-    const { data: round, error: roundError } = await supabase
-      .from('rounds')
-      .select('*')
-      .eq('round_id', roundId)
+    // Verify player belongs to the game
+    const { data: playerData, error: playerError } = await supabase
+      .from("players")
+      .select("player_id, score")
+      .eq("player_id", playerId)
+      .eq("room_id", roundData.room_id)
       .single();
 
-    if (roundError || !round) {
-      throw new Error('Round not found');
-    }
+    if (playerError) throw playerError;
+    if (!playerData) throw new Error("Player is not part of this game");
 
-    // Calculate score based on time difference
-    const MAX_SCORE = 1000;
-    const MAX_TIME = 30; // Maximum time in seconds to answer
-
-    const startTime = new Date(round.created_at).getTime();
+    // Calculate time taken
+    const startTime = new Date(roundData.created_at).getTime();
     const answerTime = new Date().getTime();
     const timeDiff = (answerTime - startTime) / 1000;
 
+    // Calculate score
     let score = 0;
     if (timeDiff <= MAX_TIME) {
       score = Math.round(MAX_SCORE * (1 - timeDiff / MAX_TIME));
@@ -115,13 +126,10 @@ serve(async (req) => {
 
     // Check if the answer matches track name or artist name with fuzzy matching
     const normalizedAnswer = normalizeText(answer);
-    const normalizedTrackName = normalizeText(round.track.name);
-    const normalizedArtistNames = round.track.artists.map((artist) =>
-      normalizeText(artist.name),
-    );
-
-    // Set thresholds for matching
-    const SIMILARITY_THRESHOLD = 0.85; // 85% similarity required for a match
+    const normalizedTrackName = normalizeText(roundData.track.name);
+    const normalizedArtistNames = roundData.track.artists.map((
+      artist: Artist,
+    ) => normalizeText(artist.name));
 
     // Check track name similarity
     const trackSimilarity = calculateSimilarity(
@@ -132,66 +140,52 @@ serve(async (req) => {
 
     // Check artist name similarity
     const isArtistMatch = normalizedArtistNames.some(
-      (artistName) =>
+      (artistName: string) =>
         calculateSimilarity(normalizedAnswer, artistName) >=
-        SIMILARITY_THRESHOLD,
+          SIMILARITY_THRESHOLD,
     );
 
     const isCorrect = isTrackMatch || isArtistMatch;
 
     if (!isCorrect) {
-      score = 0;
-    }
-
-    // Update the round's answers
-    const newAnswers = {
-      ...round.answers,
-      [playerId]: {
-        answer,
-        score,
-        answeredAt: new Date().toISOString(),
-      },
-    };
-
-    // Only update scores if answer was correct and score > 0
-    if (score > 0) {
-      const { error: updateError } = await supabase.rpc('submit_answer', {
-        p_round_id: roundId,
-        p_player_id: playerId,
-        p_answers: newAnswers,
-        p_score: score,
+      return new Response(JSON.stringify({ success: false, score: 0 }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
       });
-
-      if (updateError) {
-        throw updateError;
-      }
-    } else {
-      // Just update the answers without updating player score
-      const { error: updateError } = await supabase
-        .from('rounds')
-        .update({ answers: newAnswers })
-        .eq('round_id', roundId);
-
-      if (updateError) {
-        throw updateError;
-      }
     }
 
+    // Insert answer
+    const { error: answerError } = await supabase.from("answers").insert({
+      round_id: roundId,
+      player_id: playerId,
+      answer,
+      score,
+    });
+
+    if (answerError) throw answerError;
+
+    // Update player score
+    const { error: updateError } = await supabase
+      .from("players")
+      .update({ score: playerData.score + score })
+      .eq("player_id", playerId);
+
+    if (updateError) throw updateError;
+
+    return new Response(JSON.stringify({ success: true, score }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      status: 200,
+    });
+  } catch (error: unknown) {
+    console.error(error);
     return new Response(
       JSON.stringify({
-        score,
-        isCorrect,
-        timeTaken: timeDiff,
+        error: error instanceof Error ? error.message : "Unknown error",
       }),
       {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 500,
       },
     );
-  } catch (error) {
-    return new Response(JSON.stringify({ error: error.message }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      status: 400,
-    });
   }
 });

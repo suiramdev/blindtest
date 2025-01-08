@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/lib/supabase';
 import { useRoom } from '@/hooks/useRoom';
-import { Round } from '@/utils/api/types';
+import { Round } from '@/utils/api/round';
 import { cn } from '@/lib/utils';
 import { Check } from 'lucide-react';
 import {
@@ -16,6 +16,7 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { useState } from 'react';
+import { AnswerResults } from './AnswerResults';
 
 interface AnswerInputProps {
   round: Round;
@@ -27,7 +28,7 @@ const answerSchema = z.object({
 
 type AnswerFormValues = z.infer<typeof answerSchema>;
 
-export function AnswerInput({ round }: AnswerInputProps) {
+export function AnswerForm({ round }: AnswerInputProps) {
   const { room, currentPlayer } = useRoom();
   const [shakeKey, setShakeKey] = useState(0);
 
@@ -49,7 +50,7 @@ export function AnswerInput({ round }: AnswerInputProps) {
     if (!currentPlayer || !room) return;
 
     try {
-      await supabase.functions.invoke('submit-answer', {
+      const { data, error } = await supabase.functions.invoke('submit-answer', {
         body: {
           roundId: round.round_id,
           playerId: currentPlayer.player_id,
@@ -57,11 +58,15 @@ export function AnswerInput({ round }: AnswerInputProps) {
         },
       });
 
-      setShakeKey((prev) => prev + 1);
-      form.setError('answer', {
-        type: 'manual',
-        message: 'Wrong answer, try again!',
-      });
+      if (error) throw error;
+
+      if (!data.success) {
+        setShakeKey((prev) => prev + 1);
+        form.setError('answer', {
+          type: 'manual',
+          message: 'Wrong answer, try again!',
+        });
+      }
 
       reset(
         {
@@ -83,7 +88,8 @@ export function AnswerInput({ round }: AnswerInputProps) {
 
   return (
     <Form {...form}>
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-2">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <AnswerResults round={round} />
         <FormField
           control={form.control}
           name="answer"
@@ -93,13 +99,14 @@ export function AnswerInput({ round }: AnswerInputProps) {
                 <FormControl>
                   <Input
                     {...field}
-                    placeholder="Enter song name, artist or album..."
+                    placeholder="Enter song name or artist..."
                     disabled={isSubmitting}
                     className={cn(
                       'h-10',
                       form.formState.errors.answer &&
                         'border-destructive animate-shake',
                     )}
+                    autoComplete="off"
                   />
                 </FormControl>
                 <FormMessage />

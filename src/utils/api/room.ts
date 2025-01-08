@@ -1,27 +1,45 @@
-import { supabase } from '@/lib/supabase';
-import { Room, RoomSchema } from './types';
-import { getCurrentSession } from './auth';
-import { createPlayer, getPlayers } from './player';
+import { z } from "zod";
+import { supabase } from "@/lib/supabase";
+import { getCurrentSession } from "./auth";
+import { createPlayer, getPlayers } from "./player";
+import { PlayerSchema } from "./player";
+import { RoundSchema } from "./round";
+
+export const RoomSchema = z.object({
+  room_id: z.string(),
+  host_id: z.string().uuid(),
+  playlist_id: z.string().nullable(),
+  created_at: z.string(),
+  status: z.enum(["waiting", "playing", "finished"]).default("waiting"),
+  players: z.array(PlayerSchema).optional(),
+  rounds: z.array(RoundSchema).optional(),
+});
+
+export type Room = z.infer<typeof RoomSchema>;
 
 export async function createRoom(): Promise<Room> {
   const session = await getCurrentSession();
 
   const { data, error } = await supabase
-    .from('rooms')
+    .from("rooms")
     .insert({ host_id: session.user.id })
     .select()
     .single();
 
-  if (error) throw new Error('Failed to create room');
+  if (error) throw new Error("Failed to create room");
 
   return RoomSchema.parse(data);
 }
 
 export async function getRoom(roomId: string): Promise<Room | null> {
   const { data, error } = await supabase
-    .from('rooms')
-    .select('*')
-    .eq('room_id', roomId)
+    .from("rooms")
+    .select(`
+      *,
+      players (*),
+      rounds (*)
+    `)
+    .eq("room_id", roomId)
     .single();
 
   if (error) return null;
@@ -39,18 +57,18 @@ export async function leaveRoom(roomId: string): Promise<void> {
   const session = await getCurrentSession();
 
   const room = await getRoom(roomId);
-  if (!room) throw new Error('Room not found');
+  if (!room) throw new Error("Room not found");
 
   const isHost = room.host_id === session.user.id;
 
   // Remove player
   const { error } = await supabase
-    .from('players')
+    .from("players")
     .delete()
-    .eq('room_id', roomId)
-    .eq('user_id', session.user.id);
+    .eq("room_id", roomId)
+    .eq("user_id", session.user.id);
 
-  if (error) throw new Error('Failed to leave room');
+  if (error) throw new Error("Failed to leave room");
 
   if (isHost) {
     await handleHostLeaving(roomId, session.user.id);
@@ -77,18 +95,18 @@ export async function promoteNewHost(
   roomId: string,
   newHostPlayerId: string,
 ): Promise<void> {
-  const { error } = await supabase.rpc('promote_host', {
+  const { error } = await supabase.rpc("promote_host", {
     _room_id: roomId,
     _player_id: newHostPlayerId,
   });
 
-  if (error) throw new Error('Failed to promote new host');
+  if (error) throw new Error("Failed to promote new host");
 }
 
 async function deleteRoom(roomId: string): Promise<void> {
-  const { error } = await supabase.from('rooms').delete().eq('room_id', roomId);
+  const { error } = await supabase.from("rooms").delete().eq("room_id", roomId);
 
-  if (error) throw new Error('Failed to delete room');
+  if (error) throw new Error("Failed to delete room");
 }
 
 export async function kickPlayer(
@@ -96,19 +114,19 @@ export async function kickPlayer(
   playerId: string,
 ): Promise<void> {
   const { error } = await supabase
-    .from('players')
+    .from("players")
     .delete()
-    .eq('room_id', roomId)
-    .eq('player_id', playerId);
+    .eq("room_id", roomId)
+    .eq("player_id", playerId);
 
-  if (error) throw new Error('Failed to kick player');
+  if (error) throw new Error("Failed to kick player");
 }
 
 export async function startRound(
   roomId: string,
   playlistId: string,
 ): Promise<void> {
-  await supabase.functions.invoke('start-round', {
+  await supabase.functions.invoke("start-round", {
     body: {
       roomId,
       playlistId,

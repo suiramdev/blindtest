@@ -20,7 +20,6 @@ import {
   getSpotifyPlaylist,
 } from '@/utils/api/spotify';
 import { cn } from '@/lib/utils';
-import { SpotifySearchResponse, SpotifyPlaylist } from '@/utils/api/types';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useDebounce } from '@/hooks/useDebounce';
 
@@ -35,7 +34,11 @@ export function PlaylistSearch({ value, onChange }: PlaylistSearchProps) {
   const debouncedSearch = useDebounce(search, 500);
 
   // Query for search results
-  const searchQuery = useQuery<SpotifySearchResponse>({
+  const {
+    data: playlists,
+    isLoading: playlistsLoading,
+    isError: playlistsError,
+  } = useQuery({
     queryKey: ['spotify-search', debouncedSearch],
     queryFn: () => searchSpotifyPlaylists(debouncedSearch),
     enabled: debouncedSearch.length > 0,
@@ -43,20 +46,13 @@ export function PlaylistSearch({ value, onChange }: PlaylistSearchProps) {
   });
 
   // Query for selected playlist details
-  const selectedPlaylistQuery = useQuery<SpotifyPlaylist>({
-    queryKey: ['spotify-playlist', value],
-    queryFn: () => getSpotifyPlaylist(value!),
-    enabled: !!value,
-    staleTime: 1000 * 60 * 5,
-  });
-
-  const playlists = (searchQuery.data?.playlists?.items ?? []).filter(
-    (playlist) => playlist !== null,
-  );
-
-  const selectedPlaylist = value
-    ? (selectedPlaylistQuery.data ?? playlists.find((p) => p.id === value))
-    : null;
+  const { data: selectedPlaylist, isLoading: selectedPlaylistLoading } =
+    useQuery({
+      queryKey: ['spotify-playlist', value],
+      queryFn: () => getSpotifyPlaylist(value!),
+      enabled: !!value,
+      staleTime: 1000 * 60 * 5,
+    });
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -79,7 +75,7 @@ export function PlaylistSearch({ value, onChange }: PlaylistSearchProps) {
                 </AvatarFallback>
               </Avatar>
             )}
-            {selectedPlaylistQuery.isLoading ? (
+            {selectedPlaylistLoading ? (
               <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
               selectedPlaylist?.name || 'Select a playlist...'
@@ -96,14 +92,14 @@ export function PlaylistSearch({ value, onChange }: PlaylistSearchProps) {
             onValueChange={setSearch}
           />
           <CommandList>
-            {searchQuery.isLoading ? (
+            {playlistsLoading ? (
               <div className="p-4 text-center">
                 <Loader2 className="h-4 w-4 animate-spin mx-auto" />
                 <p className="text-sm text-muted-foreground">
                   Searching playlists...
                 </p>
               </div>
-            ) : searchQuery.isError ? (
+            ) : playlistsError ? (
               <div className="p-4 text-center text-sm text-destructive">
                 Error loading playlists. Please try again.
               </div>
@@ -111,9 +107,9 @@ export function PlaylistSearch({ value, onChange }: PlaylistSearchProps) {
               <CommandEmpty>No playlists found.</CommandEmpty>
             )}
 
-            {!searchQuery.isLoading && !searchQuery.isError && (
+            {!playlistsLoading && !playlistsError && (
               <CommandGroup>
-                {playlists.map((playlist) => (
+                {playlists?.map((playlist) => (
                   <CommandItem
                     key={playlist.id}
                     value={playlist.id}

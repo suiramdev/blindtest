@@ -29,7 +29,7 @@ const waitingRoomSchema = z.object({
 type WaitingRoomForm = z.infer<typeof waitingRoomSchema>;
 
 export function WaitingRoom() {
-  const { room, currentPlayer, isHost, isLoading } = useRoom();
+  const { room, currentPlayer, isHost } = useRoom();
   const [joinDialogOpen, setJoinDialogOpen] = useState(false);
   const navigate = useNavigate();
 
@@ -41,10 +41,11 @@ export function WaitingRoom() {
   });
 
   useEffect(() => {
-    if (!isLoading && !currentPlayer) {
+    // If the room is loaded and the current player is not found, open the join dialog
+    if (room && !currentPlayer) {
       setJoinDialogOpen(true);
     }
-  }, [currentPlayer, isLoading]);
+  }, [room, currentPlayer]);
 
   const onSubmit = async (values: WaitingRoomForm) => {
     if (!room) return;
@@ -78,6 +79,7 @@ export function WaitingRoom() {
       toast.success('Invite link copied to clipboard!');
     } catch (error) {
       toast.error('Failed to copy invite link');
+      console.error('Failed to copy invite link', error);
     }
   };
 
