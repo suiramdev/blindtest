@@ -1,39 +1,39 @@
-import { Button } from '@/components/ui/button';
+import { useState } from "react";
+import { toast } from "sonner";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
+} from "@/components/ui/dialog";
 import {
   Drawer,
   DrawerContent,
   DrawerDescription,
   DrawerHeader,
   DrawerTitle,
-} from '@/components/ui/drawer';
-import { Input } from '@/components/ui/input';
-import { joinRoom } from '@/utils/api/room';
-import { useState } from 'react';
-import { toast } from 'sonner';
-import { supabase } from '@/lib/supabase';
-import { useSession } from '@/hooks/useSession';
-import { useRoom } from '@/hooks/useRoom';
-import { useMediaQuery } from '@/hooks/useMediaQuery';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
+} from "@/components/ui/drawer";
+import { Input } from "@/components/ui/input";
+import { joinRoom } from "@/utils/api/room";
+import { supabase } from "@/lib/supabase";
+import { useSession } from "@/hooks/use-session";
+import { useRoom } from "@/hooks/use-room";
+import { useMediaQuery } from "@/hooks/use-media-query";
 import {
   Form,
   FormControl,
   FormField,
   FormItem,
   FormMessage,
-} from '@/components/ui/form';
+} from "@/components/ui/form";
 
 const joinRoomSchema = z.object({
-  username: z.string().min(2, 'Username must be at least 2 characters'),
+  username: z.string().min(2, "Username must be at least 2 characters"),
 });
 
 type JoinRoomFormValues = z.infer<typeof joinRoomSchema>;
@@ -47,12 +47,12 @@ export function JoinRoomDialog({ open, onOpenChange }: JoinRoomDialogProps) {
   const [loading, setLoading] = useState(false);
   const { session } = useSession();
   const { room } = useRoom();
-  const isDesktop = useMediaQuery('(min-width: 768px)');
+  const isDesktop = useMediaQuery("(min-width: 768px)");
 
   const form = useForm<JoinRoomFormValues>({
     resolver: zodResolver(joinRoomSchema),
     defaultValues: {
-      username: '',
+      username: "",
     },
   });
 
@@ -71,10 +71,10 @@ export function JoinRoomDialog({ open, onOpenChange }: JoinRoomDialogProps) {
 
       onOpenChange(false);
     } catch (error) {
-      toast.error('Failed to join room', {
-        description: 'Please try again later.',
+      toast.error("Failed to join room", {
+        description: "Please try again later.",
       });
-      console.error('Failed to join room:', error);
+      console.error("Failed to join room:", error);
     } finally {
       setLoading(false);
     }

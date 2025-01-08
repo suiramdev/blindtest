@@ -1,29 +1,28 @@
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { supabase } from '@/lib/supabase';
-import { useRoom } from '@/hooks/useRoom';
-import { Round } from '@/utils/api/round';
-import { cn } from '@/lib/utils';
-import { Check } from 'lucide-react';
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { Check } from "lucide-react";
+import { useState } from "react";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { useRoom } from "@/hooks/use-room";
+import { submitAnswer, type Round } from "@/utils/api/round";
+import { cn } from "@/lib/utils";
 import {
   Form,
   FormControl,
   FormField,
   FormItem,
   FormMessage,
-} from '@/components/ui/form';
-import { useState } from 'react';
-import { AnswerResults } from './AnswerResults';
+} from "@/components/ui/form";
+import { AnswerResults } from "./answer-results";
 
 interface AnswerInputProps {
   round: Round;
 }
 
 const answerSchema = z.object({
-  answer: z.string().min(1, 'Please enter an answer'),
+  answer: z.string().min(1, "Please enter an answer"),
 });
 
 type AnswerFormValues = z.infer<typeof answerSchema>;
@@ -35,7 +34,7 @@ export function AnswerForm({ round }: AnswerInputProps) {
   const form = useForm<AnswerFormValues>({
     resolver: zodResolver(answerSchema),
     defaultValues: {
-      answer: '',
+      answer: "",
     },
   });
 
@@ -50,27 +49,23 @@ export function AnswerForm({ round }: AnswerInputProps) {
     if (!currentPlayer || !room) return;
 
     try {
-      const { data, error } = await supabase.functions.invoke('submit-answer', {
-        body: {
-          roundId: round.round_id,
-          playerId: currentPlayer.player_id,
-          answer: values.answer,
-        },
-      });
+      const response = await submitAnswer(
+        round.round_id,
+        currentPlayer.player_id,
+        values.answer,
+      );
 
-      if (error) throw error;
-
-      if (!data.success) {
+      if (!response.success) {
         setShakeKey((prev) => prev + 1);
-        form.setError('answer', {
-          type: 'manual',
-          message: 'Wrong answer, try again!',
+        form.setError("answer", {
+          type: "manual",
+          message: "Wrong answer, try again!",
         });
       }
 
       reset(
         {
-          answer: '',
+          answer: "",
         },
         {
           keepDirty: true,
@@ -78,11 +73,11 @@ export function AnswerForm({ round }: AnswerInputProps) {
         },
       );
     } catch (error) {
-      setError('answer', {
-        type: 'manual',
-        message: 'Failed to submit answer',
+      setError("answer", {
+        type: "manual",
+        message: "Failed to submit answer",
       });
-      console.error('Failed to submit answer:', error);
+      console.error("Failed to submit answer:", error);
     }
   };
 
@@ -102,9 +97,9 @@ export function AnswerForm({ round }: AnswerInputProps) {
                     placeholder="Enter song name or artist..."
                     disabled={isSubmitting}
                     className={cn(
-                      'h-10',
+                      "h-10",
                       form.formState.errors.answer &&
-                        'border-destructive animate-shake',
+                        "animate-shake border-destructive",
                     )}
                     autoComplete="off"
                   />

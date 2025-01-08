@@ -1,4 +1,4 @@
-import { supabase } from '@/lib/supabase';
+import { supabase } from "@/lib/supabase";
 
 export async function getCurrentSession() {
   const {
@@ -6,8 +6,8 @@ export async function getCurrentSession() {
     error,
   } = await supabase.auth.getSession();
 
-  if (error || !session) {
-    throw new Error('Not authenticated');
+  if (error ?? !session) {
+    throw new Error("Not authenticated");
   }
 
   return session;

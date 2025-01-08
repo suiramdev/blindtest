@@ -1,16 +1,15 @@
-import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/lib/supabase';
-import { Session } from '@supabase/supabase-js';
-import { useEffect } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { type Session } from "@supabase/supabase-js";
+import { useEffect } from "react";
+import { supabase } from "@/lib/supabase";
 
 export function useSession() {
   const {
-    data: session,
+    data: sessionData,
     isLoading,
     error,
   } = useQuery<Session | null>({
-    queryKey: ['session'],
+    queryKey: ["session"],
     queryFn: async () => {
       const { data } = await supabase.auth.getSession();
       return data.session;
@@ -27,14 +26,16 @@ export function useSession() {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
       // Invalidate the session query when auth state changes
-      queryClient.setQueryData(['session'], session);
+      queryClient.setQueryData(["session"], session);
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      subscription.unsubscribe();
+    };
   }, [queryClient]);
 
   return {
-    session,
+    session: sessionData,
     isLoading,
     error,
   };

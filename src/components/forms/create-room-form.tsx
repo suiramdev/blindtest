@@ -1,26 +1,26 @@
-import { z } from 'zod';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm } from 'react-hook-form';
-import { useState } from 'react';
-import { useNavigate } from '@tanstack/react-router';
-import { toast } from 'sonner';
-import { supabase } from '@/lib/supabase';
-import { useSession } from '@/hooks/useSession';
-import { createRoom, joinRoom } from '@/utils/api/room';
-import { Button } from '@/components/ui/button';
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm, type SubmitHandler } from "react-hook-form";
+import { useState } from "react";
+import { useNavigate } from "@tanstack/react-router";
+import { toast } from "sonner";
+import { PlusIcon } from "lucide-react";
+import { supabase } from "@/lib/supabase";
+import { useSession } from "@/hooks/use-session";
+import { createRoom, joinRoom } from "@/utils/api/room";
+import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
   FormField,
   FormItem,
   FormMessage,
-} from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import { cn } from '@/lib/utils';
-import { PlusIcon } from 'lucide-react';
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { cn } from "@/lib/utils";
 
 export const createRoomSchema = z.object({
-  username: z.string().min(2, 'Username must be at least 2 characters'),
+  username: z.string().min(2, "Username must be at least 2 characters"),
 });
 
 export type CreateRoomFormValues = z.infer<typeof createRoomSchema>;
@@ -37,11 +37,11 @@ export function CreateRoomForm({ className }: CreateRoomFormProps) {
   const form = useForm<CreateRoomFormValues>({
     resolver: zodResolver(createRoomSchema),
     defaultValues: {
-      username: '',
+      username: "",
     },
   });
 
-  const onSubmit = async (values: CreateRoomFormValues) => {
+  const onSubmit: SubmitHandler<CreateRoomFormValues> = async (values) => {
     try {
       setLoading(true);
 
@@ -52,10 +52,9 @@ export function CreateRoomForm({ className }: CreateRoomFormProps) {
       const room = await createRoom();
       await joinRoom(room.room_id, values.username);
 
-      navigate({ to: `/room/${room.room_id}` });
+      await navigate({ to: `/room/${room.room_id}` });
     } catch (error) {
-      toast.error('Failed to create room');
-      console.error('Failed to create room:', error);
+      toast.error("Failed to create room");
     } finally {
       setLoading(false);
     }
@@ -65,7 +64,7 @@ export function CreateRoomForm({ className }: CreateRoomFormProps) {
     <Form {...form}>
       <form
         onSubmit={form.handleSubmit(onSubmit)}
-        className={cn('space-y-4 w-full', className)}
+        className={cn("w-full space-y-4", className)}
       >
         <FormField
           control={form.control}
@@ -76,7 +75,6 @@ export function CreateRoomForm({ className }: CreateRoomFormProps) {
                 <Input
                   placeholder="Username"
                   className="text-center"
-                  size="lg"
                   {...field}
                 />
               </FormControl>
@@ -85,7 +83,7 @@ export function CreateRoomForm({ className }: CreateRoomFormProps) {
           )}
         />
         <Button type="submit" className="w-full" size="lg" loading={loading}>
-          <PlusIcon className="w-4 h-4" />
+          <PlusIcon className="h-4 w-4" />
           Create a Room
         </Button>
       </form>

@@ -24,7 +24,7 @@ export async function createPlayer(
     .insert({
       room_id: roomId,
       user_id: session.user.id,
-      username: username,
+      username,
     })
     .select()
     .single();

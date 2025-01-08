@@ -1,8 +1,7 @@
 import { z } from "zod";
 import { supabase } from "@/lib/supabase";
 import { getCurrentSession } from "./auth";
-import { createPlayer, getPlayers } from "./player";
-import { PlayerSchema } from "./player";
+import { createPlayer, getPlayers, PlayerSchema } from "./player";
 import { RoundSchema } from "./round";
 
 export const RoomSchema = z.object({
@@ -34,11 +33,13 @@ export async function createRoom(): Promise<Room> {
 export async function getRoom(roomId: string): Promise<Room | null> {
   const { data, error } = await supabase
     .from("rooms")
-    .select(`
+    .select(
+      `
       *,
       players (*),
       rounds (*)
-    `)
+    `,
+    )
     .eq("room_id", roomId)
     .single();
 

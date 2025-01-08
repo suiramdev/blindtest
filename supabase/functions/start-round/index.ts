@@ -76,7 +76,7 @@ Deno.serve(async (req) => {
 
     if (roomError) throw roomError;
 
-    return new Response(JSON.stringify({ round, previewUrl, randomTrack }), {
+    return new Response(JSON.stringify({ round }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,
     });

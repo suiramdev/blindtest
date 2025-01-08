@@ -1,14 +1,14 @@
-import { MoreVertical, Crown, UserX } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { MoreVertical, Crown, UserX } from "lucide-react";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { toast } from 'sonner';
-import { kickPlayer, promoteNewHost } from '@/utils/api/room';
-import { useRoom } from '@/hooks/useRoom';
+} from "@/components/ui/dropdown-menu";
+import { kickPlayer, promoteNewHost } from "@/utils/api/room";
+import { useRoom } from "@/hooks/use-room";
 
 interface PlayerActionsMenuProps {
   playerId: string;
@@ -23,10 +23,10 @@ export function PlayerActionsMenu({ playerId }: PlayerActionsMenuProps) {
     try {
       await promoteNewHost(room.room_id, playerId);
 
-      toast.success('Player promoted to host');
+      toast.success("Player promoted to host");
     } catch (error) {
-      toast.error('Failed to promote player to host');
-      console.error('Failed to promote player to host:', error);
+      toast.error("Failed to promote player to host");
+      console.error("Failed to promote player to host:", error);
     }
   };
 
@@ -34,10 +34,10 @@ export function PlayerActionsMenu({ playerId }: PlayerActionsMenuProps) {
     try {
       await kickPlayer(room.room_id, playerId);
 
-      toast.success('Player kicked from room');
+      toast.success("Player kicked from room");
     } catch (error) {
-      toast.error('Failed to kick player');
-      console.error('Failed to kick player:', error);
+      toast.error("Failed to kick player");
+      console.error("Failed to kick player:", error);
     }
   };
 

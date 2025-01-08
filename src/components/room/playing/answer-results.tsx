@@ -1,5 +1,5 @@
 import { Music2 } from 'lucide-react';
-import { Round } from '@/utils/api/round';
+import { type Round } from '@/utils/api/round';
 
 interface AnswerResultsProps {
   round: Round;
@@ -7,7 +7,7 @@ interface AnswerResultsProps {
 
 export function AnswerResults({ round }: AnswerResultsProps) {
   // Get correct answers from the round
-  const correctAnswers = Object.entries(round.answers || {})
+  const correctAnswers = Object.entries(round.answers ?? {})
     .filter(([, answer]) => answer.score > 0)
     .sort(
       (a, b) =>

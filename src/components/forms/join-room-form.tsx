@@ -2,6 +2,9 @@ import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { useNavigate } from '@tanstack/react-router';
+import { toast } from 'sonner';
+import { useState } from 'react';
+import { ArrowRightIcon } from 'lucide-react';
 import { getRoom, joinRoom } from '@/utils/api/room';
 import { Button } from '@/components/ui/button';
 import {
@@ -14,9 +17,6 @@ import {
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/lib/supabase';
-import { toast } from 'sonner';
-import { useState } from 'react';
-import { ArrowRightIcon } from 'lucide-react';
 
 export const joinRoomSchema = z.object({
   roomCode: z.string().min(1, 'Room code is required'),
@@ -62,7 +62,7 @@ export function JoinRoomForm({ className }: JoinRoomFormProps) {
       // Join the room
       await joinRoom(values.roomCode, 'Anonymous');
 
-      navigate({ to: `/room/${values.roomCode}` });
+      await navigate({ to: `/room/${values.roomCode}` });
     } catch (error) {
       toast.error('Failed to join room');
       console.error('Failed to join room:', error);
@@ -86,8 +86,6 @@ export function JoinRoomForm({ className }: JoinRoomFormProps) {
                 <Input
                   placeholder="Room Code"
                   className="text-center"
-                  variant="outline"
-                  size="lg"
                   {...field}
                 />
               </FormControl>

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState } from "react";
 
 interface RoundTimerProps {
   startTime: string;
@@ -23,8 +23,10 @@ export function RoundTimer({ startTime }: RoundTimerProps) {
       });
     }, 1000);
 
-    return () => clearInterval(timer);
+    return () => {
+      clearInterval(timer);
+    };
   }, [startTime]);
 
-  return <div className="text-2xl font-mono">{timeLeft}s</div>;
+  return <div className="font-mono text-2xl">{timeLeft}s</div>;
 }

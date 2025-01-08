@@ -1,8 +1,8 @@
-import { createFileRoute } from '@tanstack/react-router';
-import { RoomProvider } from '@/components/providers/RoomProvider';
-import { GamePage } from '@/components/room/GamePage';
+import { createFileRoute } from "@tanstack/react-router";
+import { RoomProvider } from "@/components/providers/room-provider";
+import { GamePage } from "@/components/room/game-page";
 
-export const Route = createFileRoute('/room/$id')({
+export const Route = createFileRoute("/room/$id")({
   component: RoomPage,
 });
 
@@ -11,7 +11,7 @@ function RoomPage() {
 
   return (
     <RoomProvider roomId={id}>
-      <div className="min-h-screen flex flex-col items-center justify-center">
+      <div className="flex min-h-screen flex-col items-center justify-center">
         <GamePage />
       </div>
     </RoomProvider>
