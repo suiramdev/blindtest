@@ -25,7 +25,7 @@ export type Round = z.infer<typeof RoundSchema>;
 
 export const SubmitAnswerResponseSchema = z.object({
   success: z.boolean(),
-  message: z.string(),
+  score: z.number().int(),
 });
 
 export type SubmitAnswerResponse = z.infer<typeof SubmitAnswerResponseSchema>;

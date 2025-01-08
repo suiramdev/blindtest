@@ -23,7 +23,7 @@ const queryClient = new QueryClient();
 
 // Render the app
 const rootElement = document.getElementById("root");
-if (rootElement?.innerHTML) {
+if (rootElement) {
   const root = createRoot(rootElement);
   root.render(
     <StrictMode>

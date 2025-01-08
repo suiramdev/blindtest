@@ -3,12 +3,7 @@ import { type RealtimePostgresChangesPayload } from "@supabase/supabase-js";
 import { useQuery } from "@tanstack/react-query";
 import { getRoom, type Room, RoomSchema } from "@/utils/api/room";
 import { type Player, PlayerSchema } from "@/utils/api/player";
-import {
-  type Round,
-  RoundSchema,
-  AnswerSchema,
-  type Answer,
-} from "@/utils/api/round";
+import { type Round, RoundSchema } from "@/utils/api/round";
 import { handleRealtimeUpdate } from "@/utils/realtime";
 import { supabase } from "@/lib/supabase";
 import { roomContext } from "@/contexts/room-context";
@@ -120,39 +115,6 @@ export function RoomProvider({
                 (data) => RoundSchema.parse(data),
                 current.rounds,
               ),
-            };
-          });
-        },
-      )
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "answers",
-          filter: `round_id=in.(${room?.rounds?.map((r) => r.round_id).join(",") ?? ""})`,
-        },
-        (payload: RealtimePostgresChangesPayload<Answer>) => {
-          setRoom((current) => {
-            if (!current) return current;
-            const answer = AnswerSchema.parse(payload.new);
-
-            return {
-              ...current,
-              rounds: current.rounds?.map((round) => {
-                if (round.round_id === answer.round_id) {
-                  return {
-                    ...round,
-                    answers: handleRealtimeUpdate<Answer>(
-                      payload,
-                      "answer_id",
-                      (data) => AnswerSchema.parse(data),
-                      round.answers,
-                    ),
-                  };
-                }
-                return round;
-              }),
             };
           });
         },

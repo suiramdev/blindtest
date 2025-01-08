@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { toast } from "sonner";
+import { PlayIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useSession } from "@/hooks/use-session";
 import { type Room, startRound } from "@/utils/api/room";
@@ -53,7 +54,14 @@ export function RoundResults({ room, round }: RoundResultsProps) {
         disabled={!isHost}
         loading={loading}
       >
-        {isHost ? "Next Round" : "Waiting for host..."}
+        {isHost ? (
+          <>
+            <PlayIcon className="h-4 w-4" />
+            Play Next Round
+          </>
+        ) : (
+          "Waiting for host..."
+        )}
       </Button>
     </div>
   );
