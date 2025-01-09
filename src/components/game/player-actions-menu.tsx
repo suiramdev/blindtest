@@ -10,6 +10,7 @@ import {
 import { kickPlayer, promoteNewHost } from "@/utils/api/game";
 import { type Player } from "@/utils/api/player";
 import { type Game } from "@/utils/api/game";
+import { cn } from "@/lib/utils";
 
 interface PlayerActionsMenuProps {
   game: Game;
@@ -17,7 +18,7 @@ interface PlayerActionsMenuProps {
 }
 
 export function PlayerActionsMenu({ game, player }: PlayerActionsMenuProps) {
-  const isHost = player.user_id === game.host_id;
+  const isHost = game.host_id === player.user_id;
 
   const handlePromoteHost = async () => {
     try {
@@ -45,10 +46,9 @@ export function PlayerActionsMenu({ game, player }: PlayerActionsMenuProps) {
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button
-          disabled={isHost}
           variant="ghost"
           size="icon"
-          className="h-8 w-8"
+          className={cn("h-8 w-8", isHost && "invisible")}
         >
           <MoreVertical className="h-4 w-4" />
           <span className="sr-only">Open menu</span>

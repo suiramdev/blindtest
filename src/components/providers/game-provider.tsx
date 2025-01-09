@@ -1,6 +1,6 @@
 import { type ReactNode, useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { GameContext } from "@/contexts/game-context";
+import { GameContext, type PlayerPresence } from "@/contexts/game-context";
 import {
   fetchGame,
   joinGame,
@@ -14,13 +14,16 @@ import { type Round, submitAnswer, fetchRounds } from "@/utils/api/round";
 
 interface GameProviderProps {
   children: ReactNode;
-  gameId: string; // Pass gameId instead of game
+  gameId: string;
 }
 
 export function GameProvider({ children, gameId }: GameProviderProps) {
   const queryClient = useQueryClient();
   const [currentPlayer, setCurrentPlayer] = useState<Player | null>(null);
   const [currentRound, setCurrentRound] = useState<Round | null>(null);
+  const [playerPresence, setPlayerPresence] = useState<
+    Record<string, PlayerPresence>
+  >({});
 
   // Fetch game data
   const { data: game, error } = useQuery<Game | null>({
@@ -32,7 +35,7 @@ export function GameProvider({ children, gameId }: GameProviderProps) {
   const { data: players = [] } = useQuery<Player[]>({
     queryKey: ["players", gameId],
     queryFn: () => fetchPlayers(gameId),
-    enabled: Boolean(game), // Only fetch when game exists
+    enabled: Boolean(game),
   });
 
   // Fetch rounds data
@@ -121,6 +124,19 @@ export function GameProvider({ children, gameId }: GameProviderProps) {
           });
         },
       )
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "answers",
+        },
+        () => {
+          void queryClient.invalidateQueries({
+            queryKey: ["rounds", game.game_id],
+          });
+        },
+      )
       .subscribe();
 
     return () => {
@@ -151,6 +167,67 @@ export function GameProvider({ children, gameId }: GameProviderProps) {
       setCurrentPlayer(updatedPlayer);
     }
   }, [players, currentPlayer]);
+
+  // Handle presence tracking
+  useEffect(() => {
+    if (!game || !currentPlayer) return;
+
+    const channel = supabase.channel(`presence:${gameId}`, {
+      config: {
+        presence: {
+          key: currentPlayer.player_id,
+        },
+      },
+    });
+
+    channel
+      .on("presence", { event: "sync" }, () => {
+        const newState = channel.presenceState();
+        const formattedPresence: Record<string, PlayerPresence> = {};
+
+        Object.entries(newState).forEach(([playerId, _states]) => {
+          formattedPresence[playerId] = {
+            playerId,
+            online: true,
+            lastSeen: new Date(),
+          };
+        });
+
+        setPlayerPresence(formattedPresence);
+      })
+      .on("presence", { event: "join" }, ({ key }) => {
+        setPlayerPresence((prev) => ({
+          ...prev,
+          [key]: {
+            playerId: key,
+            online: true,
+            lastSeen: new Date(),
+          },
+        }));
+      })
+      .on("presence", { event: "leave" }, ({ key }) => {
+        setPlayerPresence((prev) => ({
+          ...prev,
+          [key]: {
+            playerId: key,
+            online: false,
+            lastSeen: new Date(),
+          },
+        }));
+      });
+
+    void channel.subscribe(async (status: string) => {
+      if (status === "SUBSCRIBED") {
+        await channel.track({
+          online_at: new Date().toISOString(),
+        });
+      }
+    });
+
+    return () => {
+      void channel.unsubscribe();
+    };
+  }, [game, currentPlayer, gameId]);
 
   // Game actions using mutations
   const joinGameMutation = useMutation({
@@ -200,6 +277,7 @@ export function GameProvider({ children, gameId }: GameProviderProps) {
       value={{
         game,
         players,
+        playerPresence,
         rounds,
         round: currentRound,
         me: currentPlayer,

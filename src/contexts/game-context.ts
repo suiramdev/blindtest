@@ -3,9 +3,16 @@ import { type Game } from "@/utils/api/game";
 import { type SubmitAnswerResponse, type Round } from "@/utils/api/round";
 import { type Player } from "@/utils/api/player";
 
+export interface PlayerPresence {
+  playerId: string;
+  online: boolean;
+  lastSeen?: Date;
+}
+
 export interface GameContextType {
   game?: Game | null;
   players: Player[];
+  playerPresence: Record<string, PlayerPresence | null>;
   rounds: Round[];
   round?: Round | null;
   me?: Player | null;

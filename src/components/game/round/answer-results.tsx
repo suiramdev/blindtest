@@ -1,12 +1,14 @@
-import { memo, useMemo } from "react";
+import { useMemo } from "react";
 import { Music2 } from "lucide-react";
-import { useGame } from "@/hooks/use-game";
+import { type Round } from "@/utils/api/round";
 
-export const AnswerResults = memo(function AnswerResults() {
-  const { round } = useGame();
+interface AnswerResultsProps {
+  round: Round;
+}
 
+export function AnswerResults({ round }: AnswerResultsProps) {
   const correctAnswers = useMemo(() => {
-    if (!round?.answers) return [];
+    if (!round.answers) return [];
 
     return Object.entries(round.answers)
       .filter(([, answer]) => answer.score > 0)
@@ -15,9 +17,9 @@ export const AnswerResults = memo(function AnswerResults() {
           new Date(a[1].created_at).getTime() -
           new Date(b[1].created_at).getTime(),
       );
-  }, [round?.answers]);
+  }, [round.answers]);
 
-  if (!round || correctAnswers.length === 0) return null;
+  if (correctAnswers.length === 0) return null;
 
   return (
     <div className="space-y-2">
@@ -37,4 +39,4 @@ export const AnswerResults = memo(function AnswerResults() {
       </div>
     </div>
   );
-});
+}

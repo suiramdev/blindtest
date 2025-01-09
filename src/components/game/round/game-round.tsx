@@ -50,7 +50,7 @@ export function GameRound() {
                 </div>
                 <AnswerForm
                   onSubmitAnswer={submitAnswer}
-                  results={<AnswerResults />}
+                  results={<AnswerResults round={round} />}
                 />
               </>
             )}
