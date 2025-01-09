@@ -1,5 +1,5 @@
--- Function to generate a random room code (excluding similar looking characters)
-create or replace function generate_room_code()
+-- Function to generate a random game id (excluding similar looking characters)
+create or replace function generate_game_id()
 returns trigger
 language plpgsql
 as $$
@@ -22,18 +22,18 @@ begin
   end loop;
 
   -- If code already exists, try again recursively
-  if exists (select 1 from rooms where room_id = result) then
-    return generate_room_code();
+  if exists (select 1 from games where game_id = result) then
+    return generate_game_id();
   end if;
 
-  NEW.room_id := result;
+  NEW.game_id := result;
   return NEW;
 end;
 $$;
 
--- Trigger to automatically generate room code when room_id is null
-create trigger set_room_code
-  before insert on rooms
+-- Trigger to automatically generate game id when game_id is null
+create trigger set_game_id
+  before insert on games
   for each row
-  when (new.room_id is null)
-  execute function generate_room_code();
+  when (new.game_id is null)
+  execute function generate_game_id();

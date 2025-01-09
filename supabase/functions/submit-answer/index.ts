@@ -107,7 +107,7 @@ Deno.serve(async (req) => {
       .from("players")
       .select("player_id, score")
       .eq("player_id", playerId)
-      .eq("room_id", roundData.room_id)
+      .eq("game_id", roundData.game_id)
       .single();
 
     if (playerError) throw playerError;
@@ -127,9 +127,9 @@ Deno.serve(async (req) => {
     // Check if the answer matches track name or artist name with fuzzy matching
     const normalizedAnswer = normalizeText(answer);
     const normalizedTrackName = normalizeText(roundData.track.name);
-    const normalizedArtistNames = roundData.track.artists.map((
-      artist: Artist,
-    ) => normalizeText(artist.name));
+    const normalizedArtistNames = roundData.track.artists.map(
+      (artist: Artist) => normalizeText(artist.name),
+    );
 
     // Check track name similarity
     const trackSimilarity = calculateSimilarity(
@@ -142,7 +142,7 @@ Deno.serve(async (req) => {
     const isArtistMatch = normalizedArtistNames.some(
       (artistName: string) =>
         calculateSimilarity(normalizedAnswer, artistName) >=
-          SIMILARITY_THRESHOLD,
+        SIMILARITY_THRESHOLD,
     );
 
     const isCorrect = isTrackMatch || isArtistMatch;

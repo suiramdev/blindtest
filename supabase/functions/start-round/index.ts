@@ -27,7 +27,7 @@ Deno.serve(async (req) => {
     return new Response("ok", { headers: corsHeaders });
   }
 
-  const { roomId, playlistId } = await req.json();
+  const { gameId, playlistId } = await req.json();
 
   try {
     // Get playlist tracks from Spotify
@@ -55,7 +55,7 @@ Deno.serve(async (req) => {
     const { data: round, error: roundError } = await supabase
       .from("rounds")
       .insert({
-        room_id: roomId,
+        game_id: gameId,
         track: {
           ...randomTrack,
           preview_url: previewUrl,
@@ -66,15 +66,15 @@ Deno.serve(async (req) => {
 
     if (roundError) throw roundError;
 
-    // Update room status from 'waiting' to 'playing' to start the game
+    // Update game status from 'waiting' to 'playing' to start the game
     // Only updates if current status is 'waiting' to avoid race conditions
-    const { error: roomError } = await supabase
-      .from("rooms")
+    const { error: gameError } = await supabase
+      .from("games")
       .update({ status: "playing", playlist_id: playlistId })
-      .eq("room_id", roomId)
+      .eq("game_id", gameId)
       .eq("status", "waiting");
 
-    if (roomError) throw roomError;
+    if (gameError) throw gameError;
 
     return new Response(JSON.stringify({ round }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },

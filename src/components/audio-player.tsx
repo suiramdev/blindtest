@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { memo, useCallback, useEffect, useRef } from "react";
 import { useAudioStore } from "@/stores/audio-store";
 
 interface AudioPlayerProps {
@@ -10,7 +10,7 @@ interface AudioPlayerProps {
   autoPlay?: boolean;
 }
 
-export function AudioPlayer({
+export const AudioPlayer = memo(function AudioPlayer({
   src,
   startTime = 0,
   duration,
@@ -20,6 +20,17 @@ export function AudioPlayer({
 }: AudioPlayerProps) {
   const audioRef = useRef<HTMLAudioElement>(null);
   const { volume } = useAudioStore();
+
+  const handleEnded = useCallback(() => {
+    onEnded?.();
+  }, [onEnded]);
+
+  const handlePlayError = useCallback(
+    (error: Error) => {
+      onPlayError?.(error);
+    },
+    [onPlayError],
+  );
 
   useEffect(() => {
     const audio = audioRef.current;
@@ -37,7 +48,7 @@ export function AudioPlayer({
     if (autoPlay) {
       audio.play().catch((error: unknown) => {
         if (error instanceof Error) {
-          onPlayError?.(error);
+          handlePlayError(error);
         }
       });
     }
@@ -47,7 +58,7 @@ export function AudioPlayer({
     if (duration) {
       timer = setTimeout(() => {
         audio.pause();
-        onEnded?.();
+        handleEnded();
       }, duration * 1000);
     }
 
@@ -55,7 +66,15 @@ export function AudioPlayer({
       audio.pause();
       if (timer) clearTimeout(timer);
     };
-  }, [src, startTime, duration, volume, autoPlay, onPlayError, onEnded]);
+  }, [
+    src,
+    startTime,
+    duration,
+    volume,
+    autoPlay,
+    handlePlayError,
+    handleEnded,
+  ]);
 
   // Update volume when it changes
   useEffect(() => {
@@ -65,8 +84,8 @@ export function AudioPlayer({
   }, [volume]);
 
   return (
-    <audio ref={audioRef} src={src} onEnded={onEnded}>
+    <audio ref={audioRef} src={src} onEnded={handleEnded}>
       <track kind="captions" />
     </audio>
   );
-}
+});

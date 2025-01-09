@@ -7,21 +7,21 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { kickPlayer, promoteNewHost } from "@/utils/api/room";
-import { useRoom } from "@/hooks/use-room";
+import { kickPlayer, promoteNewHost } from "@/utils/api/game";
+import { type Player } from "@/utils/api/player";
+import { type Game } from "@/utils/api/game";
 
 interface PlayerActionsMenuProps {
-  playerId: string;
+  game: Game;
+  player: Player;
 }
 
-export function PlayerActionsMenu({ playerId }: PlayerActionsMenuProps) {
-  const { room } = useRoom();
-
-  if (!room) return null;
+export function PlayerActionsMenu({ game, player }: PlayerActionsMenuProps) {
+  const isHost = player.user_id === game.host_id;
 
   const handlePromoteHost = async () => {
     try {
-      await promoteNewHost(room.room_id, playerId);
+      await promoteNewHost(game.game_id, player.player_id);
 
       toast.success("Player promoted to host");
     } catch (error) {
@@ -32,9 +32,9 @@ export function PlayerActionsMenu({ playerId }: PlayerActionsMenuProps) {
 
   const handleKickPlayer = async () => {
     try {
-      await kickPlayer(room.room_id, playerId);
+      await kickPlayer(game.game_id, player.player_id);
 
-      toast.success("Player kicked from room");
+      toast.success("Player kicked from game");
     } catch (error) {
       toast.error("Failed to kick player");
       console.error("Failed to kick player:", error);
@@ -44,7 +44,12 @@ export function PlayerActionsMenu({ playerId }: PlayerActionsMenuProps) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" className="h-8 w-8">
+        <Button
+          disabled={isHost}
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8"
+        >
           <MoreVertical className="h-4 w-4" />
           <span className="sr-only">Open menu</span>
         </Button>

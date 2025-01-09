@@ -19,10 +19,8 @@ import {
   DrawerTitle,
 } from "@/components/ui/drawer";
 import { Input } from "@/components/ui/input";
-import { joinRoom } from "@/utils/api/room";
 import { supabase } from "@/lib/supabase";
 import { useSession } from "@/hooks/use-session";
-import { useRoom } from "@/hooks/use-room";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import {
   Form,
@@ -31,34 +29,36 @@ import {
   FormItem,
   FormMessage,
 } from "@/components/ui/form";
+import { joinGame } from "@/utils/api/game";
+import { useGame } from "@/hooks/use-game";
 
-const joinRoomSchema = z.object({
+const joinGameSchema = z.object({
   username: z.string().min(2, "Username must be at least 2 characters"),
 });
 
-type JoinRoomFormValues = z.infer<typeof joinRoomSchema>;
+type JoinGameFormValues = z.infer<typeof joinGameSchema>;
 
-interface JoinRoomDialogProps {
+interface JoinGameDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
-export function JoinRoomDialog({ open, onOpenChange }: JoinRoomDialogProps) {
+export function JoinGameDialog({ open, onOpenChange }: JoinGameDialogProps) {
   const [loading, setLoading] = useState(false);
   const { session } = useSession();
-  const { room } = useRoom();
+  const { game } = useGame();
   const isDesktop = useMediaQuery("(min-width: 768px)");
 
-  const form = useForm<JoinRoomFormValues>({
-    resolver: zodResolver(joinRoomSchema),
+  const form = useForm<JoinGameFormValues>({
+    resolver: zodResolver(joinGameSchema),
     defaultValues: {
       username: "",
     },
   });
 
-  if (!room) return null;
+  if (!game) return null;
 
-  const onSubmit = async (values: JoinRoomFormValues) => {
+  const onSubmit = async (values: JoinGameFormValues) => {
     setLoading(true);
 
     try {
@@ -67,14 +67,14 @@ export function JoinRoomDialog({ open, onOpenChange }: JoinRoomDialogProps) {
         await supabase.auth.signInAnonymously();
       }
 
-      await joinRoom(room.room_id, values.username);
+      await joinGame(game.game_id, values.username);
 
       onOpenChange(false);
     } catch (error) {
-      toast.error("Failed to join room", {
+      toast.error("Failed to join game", {
         description: "Please try again later.",
       });
-      console.error("Failed to join room:", error);
+      console.error("Failed to join game:", error);
     } finally {
       setLoading(false);
     }
@@ -99,7 +99,7 @@ export function JoinRoomDialog({ open, onOpenChange }: JoinRoomDialogProps) {
           )}
         />
         <Button type="submit" loading={loading}>
-          Join Room
+          Join Game
         </Button>
       </form>
     </Form>
@@ -110,9 +110,9 @@ export function JoinRoomDialog({ open, onOpenChange }: JoinRoomDialogProps) {
       <Dialog open={open}>
         <DialogContent hideClose>
           <DialogHeader>
-            <DialogTitle>Join Room</DialogTitle>
+            <DialogTitle>Join Game</DialogTitle>
             <DialogDescription>
-              Enter your username to join the room.
+              Enter your username to join the game.
             </DialogDescription>
           </DialogHeader>
           {FormContent}
@@ -125,9 +125,9 @@ export function JoinRoomDialog({ open, onOpenChange }: JoinRoomDialogProps) {
     <Drawer open={open} onOpenChange={onOpenChange}>
       <DrawerContent>
         <DrawerHeader>
-          <DrawerTitle>Join Room</DrawerTitle>
+          <DrawerTitle>Join Game</DrawerTitle>
           <DrawerDescription>
-            Enter your username to join the room.
+            Enter your username to join the game.
           </DrawerDescription>
         </DrawerHeader>
         <div className="px-4 pb-4">{FormContent}</div>

@@ -7,7 +7,6 @@ import { toast } from "sonner";
 import { PlusIcon } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useSession } from "@/hooks/use-session";
-import { createRoom, joinRoom } from "@/utils/api/room";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -18,30 +17,31 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
+import { createGame, joinGame } from "@/utils/api/game";
 
-export const createRoomSchema = z.object({
+export const createGameSchema = z.object({
   username: z.string().min(2, "Username must be at least 2 characters"),
 });
 
-export type CreateRoomFormValues = z.infer<typeof createRoomSchema>;
+export type CreateGameFormValues = z.infer<typeof createGameSchema>;
 
-interface CreateRoomFormProps {
+interface CreateGameFormProps {
   className?: string;
 }
 
-export function CreateRoomForm({ className }: CreateRoomFormProps) {
+export function CreateGameForm({ className }: CreateGameFormProps) {
   const [loading, setLoading] = useState(false);
   const { session } = useSession();
   const navigate = useNavigate();
 
-  const form = useForm<CreateRoomFormValues>({
-    resolver: zodResolver(createRoomSchema),
+  const form = useForm<CreateGameFormValues>({
+    resolver: zodResolver(createGameSchema),
     defaultValues: {
       username: "",
     },
   });
 
-  const onSubmit: SubmitHandler<CreateRoomFormValues> = async (values) => {
+  const onSubmit: SubmitHandler<CreateGameFormValues> = async (values) => {
     try {
       setLoading(true);
 
@@ -49,12 +49,12 @@ export function CreateRoomForm({ className }: CreateRoomFormProps) {
         await supabase.auth.signInAnonymously();
       }
 
-      const room = await createRoom();
-      await joinRoom(room.room_id, values.username);
+      const game = await createGame();
+      await joinGame(game.game_id, values.username);
 
-      await navigate({ to: `/room/${room.room_id}` });
+      await navigate({ to: `/game/${game.game_id}` });
     } catch (error) {
-      toast.error("Failed to create room");
+      toast.error("Failed to create game");
     } finally {
       setLoading(false);
     }
@@ -84,7 +84,7 @@ export function CreateRoomForm({ className }: CreateRoomFormProps) {
         />
         <Button type="submit" className="w-full" size="lg" loading={loading}>
           <PlusIcon className="h-4 w-4" />
-          Create a Room
+          Create a Game
         </Button>
       </form>
     </Form>

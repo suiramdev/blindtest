@@ -3,9 +3,9 @@ import { createRoot } from "react-dom/client";
 import { RouterProvider, createRouter } from "@tanstack/react-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "sonner";
+import { Spinner } from "@/components/ui/spinner";
 import { routeTree } from "./routeTree.gen";
-import { Spinner } from "./components/ui/spinner";
-import "./index.css";
+import "@/index.css";
 
 // Import the generated route tree
 

@@ -26,18 +26,18 @@ Deno.serve(async (req: Request) => {
     return new Response("ok", { headers: corsHeaders });
   }
 
-  const { roomId, playerId } = await req.json();
+  const { gameId, playerId } = await req.json();
 
   try {
     // Get current host ID to verify permissions
-    const { data: roomData, error: roomError } = await supabase
-      .from("rooms")
+    const { data: gameData, error: gameError } = await supabase
+      .from("games")
       .select("host_id")
-      .eq("room_id", roomId)
+      .eq("game_id", gameId)
       .single();
 
-    if (roomError || !roomData) {
-      return new Response(JSON.stringify({ error: "Room not found" }), {
+    if (gameError || !gameData) {
+      return new Response(JSON.stringify({ error: "Game not found" }), {
         status: 404,
         headers: {
           ...corsHeaders,
@@ -75,7 +75,7 @@ Deno.serve(async (req: Request) => {
     }
 
     // Check if caller is current host
-    if (user.id !== roomData.host_id) {
+    if (user.id !== gameData.host_id) {
       return new Response(
         JSON.stringify({
           error: "Only the current host can promote another player",
@@ -107,11 +107,11 @@ Deno.serve(async (req: Request) => {
       });
     }
 
-    // Update room host
+    // Update game host
     const { error: updateError } = await supabase
-      .from("rooms")
+      .from("games")
       .update({ host_id: playerData.user_id })
-      .eq("room_id", roomId);
+      .eq("game_id", gameId);
 
     if (updateError) {
       return new Response(JSON.stringify({ error: "Failed to update host" }), {

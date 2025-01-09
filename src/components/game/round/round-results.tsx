@@ -3,25 +3,24 @@ import { toast } from "sonner";
 import { PlayIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useSession } from "@/hooks/use-session";
-import { type Room, startRound } from "@/utils/api/room";
-import { type Round } from "@/utils/api/round";
+import { useGame } from "@/hooks/use-game";
+import { startRound } from "@/utils/api/game";
 
-interface RoundResultsProps {
-  room: Room;
-  round: Round;
-}
-
-export function RoundResults({ room, round }: RoundResultsProps) {
+export function RoundResults() {
+  const { game, round } = useGame();
   const { session } = useSession();
   const [loading, setLoading] = useState(false);
-  const isHost = room.host_id === session?.user.id;
+
+  if (!game || !round) return null;
+
+  const isHost = game.host_id === session?.user.id;
 
   const handleNextRound = async () => {
-    if (!room.playlist_id) return;
+    if (!game.playlist_id) return;
 
     try {
       setLoading(true);
-      await startRound(room.room_id, room.playlist_id);
+      await startRound(game.game_id, game.playlist_id);
     } catch (error) {
       toast.error("Failed to start next round");
       console.error("Failed to start next round", error);

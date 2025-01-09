@@ -29,7 +29,6 @@ export const SpotifyTrackSchema = z.object({
       }),
     ),
   }),
-  preview_url: z.string().nullable(),
 });
 
 export type SpotifyTrack = z.infer<typeof SpotifyTrackSchema>;

@@ -8,20 +8,43 @@ export const AnswerSchema = z.object({
   player_id: z.string().uuid(),
   answer: z.string(),
   score: z.number().int(),
-  created_at: z.string(),
+  created_at: z.coerce.date(),
 });
 
 export type Answer = z.infer<typeof AnswerSchema>;
 
 export const RoundSchema = z.object({
   round_id: z.string().uuid(),
-  room_id: z.string(),
-  track: SpotifyTrackSchema,
-  created_at: z.string(),
+  game_id: z.string(),
+  track: SpotifyTrackSchema.extend({
+    preview_url: z.string(),
+  }),
+  created_at: z.coerce.date(),
   answers: z.array(AnswerSchema).optional(),
 });
 
 export type Round = z.infer<typeof RoundSchema>;
+
+export async function fetchRounds(gameId: string): Promise<Round[]> {
+  const response = await supabase
+    .from("rounds")
+    .select("*, answers(*)")
+    .eq("game_id", gameId);
+
+  return z.array(RoundSchema).parse(response.data);
+}
+
+export async function fetchRound(roundId: string): Promise<Round> {
+  const response = await supabase
+    .from("rounds")
+    .select("*, answers(*)")
+    .eq("round_id", roundId)
+    .single();
+
+  if (response.error) throw new Error("Failed to get round");
+
+  return RoundSchema.parse(response.data);
+}
 
 export const SubmitAnswerResponseSchema = z.object({
   success: z.boolean(),

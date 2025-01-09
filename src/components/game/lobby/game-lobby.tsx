@@ -1,4 +1,3 @@
-import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -12,66 +11,56 @@ import {
   FormControl,
   FormMessage,
 } from "@/components/ui/form";
-import { startRound, leaveRoom } from "@/utils/api/room";
 import { Button } from "@/components/ui/button";
-import { useRoom } from "@/hooks/use-room";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
-import { JoinRoomDialog } from "../join-room-dialog";
+import { useGame } from "@/hooks/use-game";
 import { PlayersList } from "../players-list";
 import { PlaylistSearch } from "./playlist-search";
 
-const waitingRoomSchema = z.object({
+const gameLobbySchema = z.object({
   playlistId: z.string().min(1, "Please select a playlist"),
 });
 
-type WaitingRoomForm = z.infer<typeof waitingRoomSchema>;
+type GameLobbyForm = z.infer<typeof gameLobbySchema>;
 
-export function WaitingRoom() {
-  const { room, currentPlayer, isHost } = useRoom();
-  const [joinDialogOpen, setJoinDialogOpen] = useState(false);
+export function GameLobby() {
+  const { game, me, startRound, leaveGame } = useGame();
   const navigate = useNavigate();
 
-  const form = useForm<WaitingRoomForm>({
-    resolver: zodResolver(waitingRoomSchema),
+  const form = useForm<GameLobbyForm>({
+    resolver: zodResolver(gameLobbySchema),
     defaultValues: {
       playlistId: "",
     },
   });
 
-  useEffect(() => {
-    // If the room is loaded and the current player is not found, open the join dialog
-    if (room && !currentPlayer) {
-      setJoinDialogOpen(true);
-    }
-  }, [room, currentPlayer]);
-
-  const onSubmit = async (values: WaitingRoomForm) => {
-    if (!room) return;
+  const onSubmit = async (values: GameLobbyForm) => {
+    if (!game) return;
 
     try {
-      await startRound(room.room_id, values.playlistId);
+      await startRound(values.playlistId);
     } catch (error) {
       toast.error("Failed to start round");
       console.error(error);
     }
   };
 
-  const handleLeaveRoom = async () => {
-    if (!room) return;
+  const handleLeaveGame = async () => {
+    if (!game) return;
 
     try {
-      await leaveRoom(room.room_id);
+      await leaveGame();
 
       void navigate({ to: "/" });
     } catch (error) {
-      toast.error("Failed to leave room");
+      toast.error("Failed to leave game");
       console.error(error);
     }
   };
 
-  const inviteLink = `${window.location.origin}/room/${String(room?.room_id)}`;
+  const inviteLink = `${window.location.origin}/game/${String(game?.game_id)}`;
 
   const copyInviteLink = async () => {
     try {
@@ -95,9 +84,11 @@ export function WaitingRoom() {
     }
   };
 
-  if (!room) {
-    return <div>Room not found</div>;
+  if (!game) {
+    return <div>Game not found</div>;
   }
+
+  const isHost = me?.user_id === game.host_id;
 
   return (
     <div className="flex w-full flex-1 flex-col items-center justify-center md:max-w-xl">
@@ -158,17 +149,16 @@ export function WaitingRoom() {
                 <Button
                   variant="outline"
                   className={cn(!isHost && "flex-1")}
-                  onClick={handleLeaveRoom}
+                  onClick={handleLeaveGame}
                 >
                   <LogOut className="h-4 w-4" />
-                  Leave Room
+                  Leave Game
                 </Button>
               </div>
             </div>
           </form>
         </Form>
       </Card>
-      <JoinRoomDialog open={joinDialogOpen} onOpenChange={setJoinDialogOpen} />
     </div>
   );
 }
