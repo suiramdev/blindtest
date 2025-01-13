@@ -34,3 +34,6 @@ dist-ssr
 .env.development
 .env.production
 supabase/.temp
+
+# Add these lines to your .gitignore
+.deno/

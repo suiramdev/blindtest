@@ -13,7 +13,7 @@ import { createFileRoute } from '@tanstack/react-router'
 // Import Routes
 
 import { Route as rootRoute } from './routes/__root'
-import { Route as RoomIdImport } from './routes/room/$id'
+import { Route as GameIdImport } from './routes/game/$id'
 
 // Create Virtual Routes
 
@@ -27,9 +27,9 @@ const IndexLazyRoute = IndexLazyImport.update({
   getParentRoute: () => rootRoute,
 } as any).lazy(() => import('./routes/index.lazy').then((d) => d.Route))
 
-const RoomIdRoute = RoomIdImport.update({
-  id: '/room/$id',
-  path: '/room/$id',
+const GameIdRoute = GameIdImport.update({
+  id: '/game/$id',
+  path: '/game/$id',
   getParentRoute: () => rootRoute,
 } as any)
 
@@ -44,11 +44,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexLazyImport
       parentRoute: typeof rootRoute
     }
-    '/room/$id': {
-      id: '/room/$id'
-      path: '/room/$id'
-      fullPath: '/room/$id'
-      preLoaderRoute: typeof RoomIdImport
+    '/game/$id': {
+      id: '/game/$id'
+      path: '/game/$id'
+      fullPath: '/game/$id'
+      preLoaderRoute: typeof GameIdImport
       parentRoute: typeof rootRoute
     }
   }
@@ -58,37 +58,37 @@ declare module '@tanstack/react-router' {
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexLazyRoute
-  '/room/$id': typeof RoomIdRoute
+  '/game/$id': typeof GameIdRoute
 }
 
 export interface FileRoutesByTo {
   '/': typeof IndexLazyRoute
-  '/room/$id': typeof RoomIdRoute
+  '/game/$id': typeof GameIdRoute
 }
 
 export interface FileRoutesById {
   __root__: typeof rootRoute
   '/': typeof IndexLazyRoute
-  '/room/$id': typeof RoomIdRoute
+  '/game/$id': typeof GameIdRoute
 }
 
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/room/$id'
+  fullPaths: '/' | '/game/$id'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/room/$id'
-  id: '__root__' | '/' | '/room/$id'
+  to: '/' | '/game/$id'
+  id: '__root__' | '/' | '/game/$id'
   fileRoutesById: FileRoutesById
 }
 
 export interface RootRouteChildren {
   IndexLazyRoute: typeof IndexLazyRoute
-  RoomIdRoute: typeof RoomIdRoute
+  GameIdRoute: typeof GameIdRoute
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexLazyRoute: IndexLazyRoute,
-  RoomIdRoute: RoomIdRoute,
+  GameIdRoute: GameIdRoute,
 }
 
 export const routeTree = rootRoute
@@ -102,14 +102,14 @@ export const routeTree = rootRoute
       "filePath": "__root.tsx",
       "children": [
         "/",
-        "/room/$id"
+        "/game/$id"
       ]
     },
     "/": {
       "filePath": "index.lazy.tsx"
     },
-    "/room/$id": {
-      "filePath": "room/$id.tsx"
+    "/game/$id": {
+      "filePath": "game/$id.tsx"
     }
   }
 }

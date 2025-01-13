@@ -1,0 +1,4 @@
+{
+  "extends": "@vercel/style-guide/prettier",
+  "plugins": ["prettier-plugin-tailwindcss"]
+}
