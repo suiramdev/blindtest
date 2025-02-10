@@ -1,0 +1,19 @@
+[phases.setup]
+nixPkgs = ['nodejs', 'pnpm']
+
+[phases.install]
+cmds = [
+  'pnpm install',
+  'pnpm add -g supabase'
+]
+
+[phases.build]
+cmds = [
+  'supabase link --project-ref ${SUPABASE_PROJECT_REF} -p ${SUPABASE_DB_PASSWORD}',  # Link to Supabase project
+  'supabase db push',  # Run database migrations
+  'supabase functions deploy',  # Deploy functions
+  'pnpm build'         # Build the React application
+]
+
+[start]
+cmd = 'pnpm start'
